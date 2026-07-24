@@ -55,7 +55,7 @@ Antigravity Hooks configuration file defining zero-token deterministic enforceme
 
 ### 2. Antigravity Workflows (PO & Engineering Personas)
 
-#### [NEW] [.agents/workflows/goal.md](file:///home/user/agentic-dev-skills/.agents/workflows/goal.md)
+#### [NEW] [.agents/workflows/implementation-loop.md](file:///home/user/agentic-dev-skills/.agents/workflows/implementation-loop.md)
 Autonomous execution loop workflow running `/specify -> /review-spec -> /tdd-build -> /e2e-test -> /ship`.
 
 #### [NEW] [.agents/workflows/interview-prd.md](file:///home/user/agentic-dev-skills/.agents/workflows/interview-prd.md)

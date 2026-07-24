@@ -14,7 +14,7 @@ metadata:
 The `/audit-prd` skill serves as the **inflexible gatekeeper** of product specifications. Positioned between the `/interview-prd` phase and the `/arch-gate` architectural blueprint phase, it audits `docs/PRD.md` to ensure zero missing pillars, zero vague user stories, and zero architectural ambiguities.
 
 If `docs/PRD.md` fails any audit check:
-- `/audit-prd` **technically blocks** execution of downstream skills (`/arch-gate`, `/prd2backlog`, `/goal`).
+- `/audit-prd` **technically blocks** execution of downstream skills (`/arch-gate`, `/prd2backlog`, `/implementation-loop`).
 - It presents the Product Owner with targeted interactive questions to fill missing information.
 - Once 100% compliant, it updates `docs/PRD.md` status to **`status: sealed`**.
 
@@ -91,5 +91,5 @@ Verifies that requirements in tables (`FR1`..`FRn`, `NFR1`..`NFRn`) match the us
 - Output success confirmation clearing downstream gates for `/arch-gate`.
 
 ## 6. Guidelines & Rules
-- Do NOT permit `/arch-gate` or `/goal` execution if `docs/PRD.md` is in `status: draft` or fails audit checks.
+- Do NOT permit `/arch-gate` or `/implementation-loop` execution if `docs/PRD.md` is in `status: draft` or fails audit checks.
 - Adhere strictly to `AGENTS.md`.

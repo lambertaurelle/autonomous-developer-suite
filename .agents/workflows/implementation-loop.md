@@ -1,7 +1,7 @@
-# Workflow: Autonomous Developer Goal Loop (/goal)
+# Workflow: Autonomous Implementation Loop (/implementation-loop)
 
 ## Sequence
-The `/goal` command launches the orchestrator background task to execute development sequentially:
+The `/implementation-loop` workflow launches the orchestrator background task to execute development sequentially:
 
 > [!IMPORTANT]
 > **Strict Sequential Execution Policy & Autonomous Loop**
@@ -10,7 +10,7 @@ The `/goal` command launches the orchestrator background task to execute develop
 
 ```mermaid
 graph TD
-    A["Start /goal"] --> B["/specify (Fetch Issue & Draft SPEC.md)"]
+    A["Start /implementation-loop"] --> B["/specify (Fetch Issue & Draft SPEC.md)"]
     B --> C["/review-spec (Adversarial Audit)"]
     C -->|Fails Audit| B
     C -->|VERDICT: APPROVED| D["/tdd-build (Red-Green-Refactor)"]
@@ -23,4 +23,3 @@ graph TD
 
 ## Context Reset Guidelines
 At each transition, clear global context, invoking the stateless sub-agent with only current files, the specific `SPEC.md`, and `docs/architecture.md`.
-

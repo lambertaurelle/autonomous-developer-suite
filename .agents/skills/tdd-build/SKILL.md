@@ -11,7 +11,7 @@ metadata:
 # Skill: TDD Cycle Build (`/tdd-build`)
 
 ## 1. Purpose & Strategic Goal
-The `/tdd-build` skill executes the micro-level implementation cycle of the autonomous `/goal` loop. It applies strict Test-Driven Development (TDD) discipline—**Red, Green, Refactor**—to build features inside the **Functional Core (`src/core/`)** and **Imperative Shell (`src/shell/`)**. 
+The `/tdd-build` skill executes the micro-level implementation cycle of the autonomous `/implementation-loop` workflow. It applies strict Test-Driven Development (TDD) discipline—**Red, Green, Refactor**—to build features inside the **Functional Core (`src/core/`)** and **Imperative Shell (`src/shell/`)**. 
 
 To maximize execution reliability, minimize token consumption, and avoid context rot, the skill runs inside a stateless context window. All code produced must achieve **≥ 90% unit test coverage**, adhere to pure **Functional Core isolation** (zero I/O or DB imports in `src/core/`), contain **zero code shortcuts or TODOs**, and pass with **zero linter errors** before leaving the build cycle.
 

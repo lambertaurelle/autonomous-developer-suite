@@ -11,7 +11,7 @@ metadata:
 # Skill: Upstream Architecture Decision Gate (`/arch-gate`)
 
 ## 1. Purpose & Strategic Goal
-The `/arch-gate` skill forms the critical bridge between the product-focused scoping phase (`/interview-prd`, `/audit-prd`) and the engineering-focused autonomous execution phase (`/prd2backlog`, `/specify`, `/goal`). It extracts all architectural, technical, security, data, and infrastructure variables from the sealed PRD (`docs/PRD.md`) and compiles them into a single, consolidated decision matrix for human confirmation.
+The `/arch-gate` skill forms the critical bridge between the product-focused scoping phase (`/interview-prd`, `/audit-prd`) and the engineering-focused autonomous execution phase (`/prd2backlog`, `/specify`, `/implementation-loop`). It extracts all architectural, technical, security, data, and infrastructure variables from the sealed PRD (`docs/PRD.md`) and compiles them into a single, consolidated decision matrix for human confirmation.
 
 Once confirmed, the validated choices are recorded in the immutable blueprint file:
 - **Target File**: `docs/architecture.md` (located in the workspace root directory).

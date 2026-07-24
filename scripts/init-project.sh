@@ -193,7 +193,7 @@ FILES_TO_SYNC=(
     ".agents/rules/fc-is-architecture.md"
     ".agents/rules/model-cascading.md"
     ".agents/rules/traceability.md"
-    ".agents/workflows/goal.md"
+    ".agents/workflows/implementation-loop.md"
     ".agents/workflows/interview-prd.md"
     ".agents/skills/arch-gate/SKILL.md"
     ".agents/skills/audit-prd/SKILL.md"

@@ -58,7 +58,7 @@ To ensure full synchronization with GitHub for Project Management, we enforce a 
 - **Autonomous Specification Drafting (`/specify`)**: Pulls user story criteria from GitHub via the `github` MCP server, drafts `SPEC.md` at repository root, validates automatically via `/review-spec` sub-agent audit (zero HITL pauses), creates `issue/<number>-<title>` branch, commits `SPEC.md`, transitions GitHub issue state to `in-progress`, and hands off to `/tdd-build`.
 - **Branch & Commit Standards**: All staging (`git add`) and commits (`git commit`) utilize standard Git CLI to strictly enforce the rule-traceability format: `type(scope): summary [Rn] (#issue_id)`.
 - **Merge & Pull Requests (`/ship`)**: Merges into `main` are conducted via `gh pr create --fill` and completed with Squash and Merge (`gh pr merge --squash --delete-branch`) to maintain clean main commit history.
-- **Sequential Execution Policy**: The automated background development loop (`/goal`) executes strictly sequentially—one user story at a time—guaranteeing stable baselines.
+- **Sequential Execution Policy**: The automated background development loop (`/implementation-loop`) executes strictly sequentially—one user story at a time—guaranteeing stable baselines.
 
 
 

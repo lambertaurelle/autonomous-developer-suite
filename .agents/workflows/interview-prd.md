@@ -15,5 +15,5 @@ graph TD
     H -->|Select AI Data Pattern A/B/C| I[Human Architect Confirmation]
     I --> J["Write Immutable docs/architecture.md"]
     J --> K["/prd2backlog (Publish GitHub Issues)"]
-    K --> L["Autonomous Loop /goal"]
+    K --> L["Autonomous /implementation-loop"]
 ```

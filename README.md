@@ -20,13 +20,34 @@ The suite relies on a strict dual-control plane model:
                                  /interview-prd
                                         ▼
                           ┌───────────────────────────┐
-                          │   docs/PRD.md & specs/    │
+                          │  Draft docs/PRD.md        │
                           └─────────────┬─────────────┘
                                         │
-                                      /goal
+                                   /audit-prd
+                                        ▼
+                          ┌───────────────────────────┐
+                          │ Sealed docs/PRD.md (100%) │
+                          └─────────────┬─────────────┘
+                                        │
+                                   /arch-gate
+                                        ▼
+                          ┌───────────────────────────┐
+                          │ docs/architecture.md      │
+                          └─────────────┬─────────────┘
+                                        │
+                                  /prd2backlog
+                                        ▼
+                          ┌───────────────────────────┐
+                          │   GitHub Issues Created   │
+                          └─────────────┬─────────────┘
+                                        │
+                              /implementation-loop
                                         ▼
                           ┌───────────────────────────┐
                           │  Engineering Sub-Agents   │
+                          │ /specify → /review-spec   │
+                          │ → /tdd-build → /e2e-test  │
+                          │ → /ship                   │
                           └─────────────┬─────────────┘
                                         │
                           ┌─────────────▼─────────────┐
@@ -61,7 +82,7 @@ my-project/
 │   │   ├── circuit-breakers.md  # [R-BREAK] Strike counters and takeover action
 │   │   └── traceability.md      # [R-TRACE] PRD Rule to commit mapping
 │   ├── workflows/               # Pre-defined orchestration procedures
-│   │   ├── goal.md              # Autonomous development goal loop sequence
+│   │   ├── implementation-loop.md # Autonomous implementation loop sequence
 │   │   └── interview-prd.md     # Guided scoping and interview sequence
 │   └── skills/                  # Procedural skill files per persona
 │       ├── interview-prd/       # [PO] Guided scoping and web search matrix

@@ -13,7 +13,7 @@ metadata:
 Bring intent **in** from GitHub and turn it into the artifacts engineering actually works from. GitHub is intake; `SPEC.md` is the contract the agent obeys. This skill runs **fully autonomously inside the development loop**, using the adversarial `/review-spec` sub-agent to validate specifications without stopping for human-in-the-loop chat prompts.
 
 ## When to use
-- Starting an autonomous execution cycle or a task from a GitHub Issue inside `/goal`.
+- Starting an autonomous execution cycle or a task from a GitHub Issue inside `/implementation-loop`.
 
 ## Inputs — and ONLY these (keep the context tight)
 `/specify` produces one file, `SPEC.md`. To do that it needs exactly three inputs:
