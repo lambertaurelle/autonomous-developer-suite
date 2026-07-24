@@ -1,4 +1,4 @@
-# **Autonomous Developer Suite (V3) — Production-Grade Agentic Blueprint**
+# **Autonomous Developer Suite — Production-Grade Agentic Blueprint**
 
 This repository contains the complete, production-grade implementation of the **Autonomous Development Driven by AI Agents (V3)** architecture. By pairing structured specification-driven skills with deterministic, zero-token verification hooks, this suite bridges the gap between AI autonomy and absolute engineering rigor.
 
