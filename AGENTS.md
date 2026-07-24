@@ -22,9 +22,9 @@ Every modification, specification, and execution must trace directly back to PRD
 ## **2. Resource and Token Optimization**
 
 ### **2.1 Model Cascading Routing Table**
-We utilize Gemini models and cascading principles to minimize costs while maintaining extreme production quality:
-- **Gemini 1.5 Flash**: Default model for routine formatting, lint error cleaning, log trimming, spec checks, and test-suite parsing.
-- **Gemini 1.5 Pro**: Reserved for complex architectural drafting, TDD cycle debugging, complex refactoring, and initial interactive interviews.
+We utilize Gemini models and cascading principles to minimize costs while maintaining extreme production quality. Always reference the official [Google AI Latest Gemini Models Documentation](https://ai.google.dev/gemini-api/docs/latest-model) for up-to-date model capabilities and selection:
+- **Gemini 3.5 Flash-Lite**: Default high-throughput model for routine formatting, lint error cleaning, log trimming, spec checks, and test-suite parsing.
+- **Gemini 3.6 Flash**: Model for deep reasoning and complex coding tasks, reserved for architectural drafting, TDD cycle debugging, complex refactoring, and initial interactive interviews.
 
 ### **2.2 Stateless Sub-Agent Cycles**
 To prevent context rot, background agents must clear their history at each test/fix cycle. The active sub-agent context window is strictly constrained to:

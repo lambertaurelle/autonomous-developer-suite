@@ -157,7 +157,7 @@ The agent pauses the \`/goal\` loop and alerts the user only in three specific s
 
 | Optimization Technique | Description & Practical Implementation   |
 | :---- | :---- |
-| **Model Cascading** | Task allocation: lightweight, cost-effective models (Flash type) for spec review, formatting, JSON parsing, issue creation, and log cleaning. Powerful models (Pro type) reserved for architecture design, complex TDD, and stubborn debugging. |
+| **Model Cascading** | Task allocation guided by [Google AI Latest Models Documentation](https://ai.google.dev/gemini-api/docs/latest-model): high-throughput, cost-effective models (e.g. Gemini 3.5 Flash-Lite) for spec review, formatting, JSON parsing, issue creation, and log cleaning. Advanced reasoning models (e.g. Gemini 3.6 Flash) reserved for architecture design, complex TDD, and stubborn debugging. |
 | **Stateless Sub-Agents** | Full context window reset (Context Reset) at the start of each sub-task. The agent receives only 3 elements: architecture.md, the current issue spec, and the specific source files directly modified. Avoids costly history accumulation. |
 | **Log Trimming** | Scripted local filtering of terminal outputs. Upon test failure, the script strips node\_modules stack traces and injects only the exact assertion message, source file name, and offending line number into the LLM prompt. |
 | **Diff Patching** | Absolute prohibition against regenerating multi-hundred-line files for minor changes. Obligation to output targeted diff/patch blocks. |

@@ -54,7 +54,7 @@ my-project/
 │   ├── hooks.json               # Deterministic trigger definitions
 │   ├── rules/                   # Supreme agent compliance rules
 │   │   ├── fc-is-architecture.md# [R-ARCH] Functional Core vs Imperative Shell
-│   │   ├── model-cascading.md   # [R-MODEL] Gemini Pro vs Flash token routing
+│   │   ├── model-cascading.md   # [R-MODEL] Gemini model cascading & token routing (https://ai.google.dev/gemini-api/docs/latest-model)
 │   │   ├── circuit-breakers.md  # [R-BREAK] Strike counters and takeover action
 │   │   └── traceability.md      # [R-TRACE] PRD Rule to commit mapping
 │   ├── workflows/               # Pre-defined orchestration procedures

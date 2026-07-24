@@ -1,13 +1,13 @@
 # **Operational Rule: Model Cascading and Routing Guidelines**
 
-To maximize processing speed, minimize latency, prevent context distraction, and control token consumption costs, all agent-driven tasks must be dynamically routed according to this **Model Cascading** rule. This framework divides processing between lightweight, high-speed models and heavyweight, multi-step reasoning models.
+To maximize processing speed, minimize latency, prevent context distraction, and control token consumption costs, all agent-driven tasks must be dynamically routed according to this **Model Cascading** rule. Always consult the official [Google AI Latest Gemini Models Documentation](https://ai.google.dev/gemini-api/docs/latest-model) to assess available models and capabilities.
 
 ---
 
 ## **1. Core Allocation Philosophy**
 
-*   **Gemini Flash (Cost-Efficient / High-Throughput)**: Recommended for low-complexity, deterministic text processing, file parsing, formatting, log filtering, syntactic audits, and single-file spec reviews.
-*   **Gemini Pro (Deep Reasoning / Complex Context)**: Reserved for high-complexity architectural design, multi-file code synthesis, Test-Driven Development (TDD) iteration, debugging of recursive errors, and deep system boundary negotiations.
+*   **Gemini 3.5 Flash-Lite (Cost-Efficient / High-Throughput)**: Recommended for low-complexity, deterministic text processing, file parsing, formatting, log filtering, syntactic audits, and single-file spec reviews.
+*   **Gemini 3.6 Flash (Deep Reasoning / Complex Coding)**: Reserved for high-complexity architectural design, multi-file code synthesis, Test-Driven Development (TDD) iteration, debugging of recursive errors, and deep system boundary negotiations.
 
 ---
 
@@ -17,15 +17,15 @@ All operations executed by workflows must abide by the following classification 
 
 | Workflow Step | Operation | Target Model | Routing Rationale |
 | :--- | :--- | :--- | :--- |
-| **PO Scoping** | `/interview-prd` | **Gemini Pro** | Requires deep interactive reasoning, comparative synthesis of architectural choices, and generation of a 360° decision matrix. |
-| **Audit Gateway** | `/audit-prd` | **Gemini Flash** | Structural checklist verification of the PRD against the 6 pillars. Does not require advanced reasoning, but strict compliance matching. |
-| **Arch Verification**| `/arch-gate` | **Gemini Pro** | Multi-dimensional impact analysis. Formulates the immutable base in `docs/architecture.md`. |
-| **Backlog Decomp** | `/prd2backlog` | **Gemini Flash** | Standard breakdown of structured PRD sections into flat specs files. |
-| **Specification** | `/specify` | **Gemini Pro** | Structural drafting of boundaries, type contracts, inputs/outputs, and invariants. High-fidelity architectural reasoning is required. |
-| **Spec Audit** | `/review-spec` | **Gemini Flash** | Verification of specifications against `docs/architecture.md` schemas. Straightforward compliance gate. |
-| **TDD Code Cycle** | `/tdd-build` | **Gemini Pro** | Complex iterative *Red-Green-Refactor* cycles, dependency troubleshooting, and code structure repairs. |
-| **E2E Integration** | `/e2e-test` | **Gemini Pro** | Playwright browser flow orchestrator, error state parsing, DOM structural analysis. |
-| **Merge & Release** | `/ship` | **Gemini Flash** | Formatting of rule traceability metadata, generating diff logs, checking commit message compliance, and packaging. |
+| **PO Scoping** | `/interview-prd` | **Gemini 3.6 Flash** | Requires deep interactive reasoning, comparative synthesis of architectural choices, and generation of a 360° decision matrix. |
+| **Audit Gateway** | `/audit-prd` | **Gemini 3.5 Flash-Lite** | Structural checklist verification of the PRD against the 6 pillars. Does not require advanced reasoning, but strict compliance matching. |
+| **Arch Verification**| `/arch-gate` | **Gemini 3.6 Flash** | Multi-dimensional impact analysis. Formulates the immutable base in `docs/architecture.md`. |
+| **Backlog Decomp** | `/prd2backlog` | **Gemini 3.5 Flash-Lite** | Standard breakdown of structured PRD sections into flat specs files. |
+| **Specification** | `/specify` | **Gemini 3.6 Flash** | Structural drafting of boundaries, type contracts, inputs/outputs, and invariants. High-fidelity architectural reasoning is required. |
+| **Spec Audit** | `/review-spec` | **Gemini 3.5 Flash-Lite** | Verification of specifications against `docs/architecture.md` schemas. Straightforward compliance gate. |
+| **TDD Code Cycle** | `/tdd-build` | **Gemini 3.6 Flash** | Complex iterative *Red-Green-Refactor* cycles, dependency troubleshooting, and code structure repairs. |
+| **E2E Integration** | `/e2e-test` | **Gemini 3.6 Flash** | Playwright browser flow orchestrator, error state parsing, DOM structural analysis. |
+| **Merge & Release** | `/ship` | **Gemini 3.5 Flash-Lite** | Formatting of rule traceability metadata, generating diff logs, checking commit message compliance, and packaging. |
 
 ---
 

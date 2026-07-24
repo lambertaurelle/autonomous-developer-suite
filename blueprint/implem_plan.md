@@ -27,7 +27,7 @@ Build a complete, production-grade, and reusable suite combining **Antigravity R
 
 #### [NEW] [AGENTS.md](file:///home/user/agentic-dev-skills/AGENTS.md)
 Project Constitution template establishing mandatory execution rules:
-- Includes direct link to [Gemini Cookbook](https://github.com/google-gemini/cookbook) for model cascading rules.
+- Includes direct link to [Google AI Latest Gemini Models Documentation](https://ai.google.dev/gemini-api/docs/latest-model) and [Gemini Cookbook](https://github.com/google-gemini/cookbook) for model cascading rules.
 - Enforces FC/IS architecture (`src/core/` pure logic, `src/shell/` I/O), TDD Red-Green-Refactor, coverage floor ≥ 90%, zero linter errors, and EDD for embedded AI features.
 - Mandates stateless sub-agent spawning per test/fix cycle to prevent context rot.
 - Enforces traceability commit convention: `type(scope): summary [Rn] (#issue_id)`.
@@ -36,7 +36,7 @@ Project Constitution template establishing mandatory execution rules:
 Rule enforcing strict isolation between Functional Core and Imperative Shell.
 
 #### [NEW] [.agents/rules/model-cascading.md](file:///home/user/agentic-dev-skills/.agents/rules/model-cascading.md)
-Rule defining Flash vs Pro model routing based on Gemini Cookbook.
+Rule defining model routing based on [Google AI Latest Gemini Models Documentation](https://ai.google.dev/gemini-api/docs/latest-model).
 
 #### [NEW] [.agents/rules/circuit-breakers.md](file:///home/user/agentic-dev-skills/.agents/rules/circuit-breakers.md)
 Rule enforcing 5-attempt circuit breaker limits and context resetting.

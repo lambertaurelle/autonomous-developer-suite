@@ -182,9 +182,9 @@ Every modification, specification, and execution must trace directly back to PRD
 ## **2. Resource and Token Optimization**
 
 ### **2.1 Model Cascading Routing Table**
-We utilize Gemini models and cascading principles to minimize costs while maintaining extreme production quality:
-- **Gemini 1.5 Flash**: Default model for routine formatting, lint error cleaning, log trimming, spec checks, and test-suite parsing.
-- **Gemini 1.5 Pro**: Reserved for complex architectural drafting, TDD cycle debugging, complex refactoring, and initial interactive interviews.
+We utilize Gemini models and cascading principles to minimize costs while maintaining extreme production quality. Always reference the official [Google AI Latest Gemini Models Documentation](https://ai.google.dev/gemini-api/docs/latest-model) for up-to-date model capabilities and selection:
+- **Gemini 3.5 Flash-Lite**: Default high-throughput model for routine formatting, lint error cleaning, log trimming, spec checks, and test-suite parsing.
+- **Gemini 3.6 Flash**: Model for deep reasoning and complex coding tasks, reserved for architectural drafting, TDD cycle debugging, complex refactoring, and initial interactive interviews.
 
 ### **2.2 Stateless Sub-Agent Cycles**
 To prevent context rot, background agents must clear their history at each test/fix cycle. The active sub-agent context window is strictly constrained to:
@@ -247,16 +247,18 @@ cat << 'EOF' > .agents/rules/model-cascading.md
 # Rule: Model Cascading and Quota Efficiency [R-MODEL]
 
 ## Objective
-Preserve token consumption and execution latency while ensuring correct logical depth.
+Preserve token consumption and execution latency while ensuring correct logical depth. Always consult the official [Google AI Latest Gemini Models Documentation](https://ai.google.dev/gemini-api/docs/latest-model) for up-to-date model selection and capabilities.
 
 ## Policy
-1. **Flash Selection**:
-   - `/specify`, `/audit-prd`, `/prd2backlog`, `/review-spec`, and `/ship`.
-   - Automated code formatting and pre-commit checks.
-2. **Pro Selection**:
+1. **Gemini 3.5 Flash-Lite Selection**:
+   - `/audit-prd`, `/prd2backlog`, `/review-spec`, and `/ship`.
+   - Automated code formatting, linting, and log filtering checks.
+2. **Gemini 3.6 Flash Selection**:
    - `/interview-prd` (when web recommendations are active).
    - `/arch-gate` (critical decision matrix generation).
+   - `/specify` (architectural contract and type specification drafting).
    - `/tdd-build` (during heavy Red-Green refactoring or unexpected test failures).
+   - `/e2e-test` (Playwright flow orchestrator and DOM analysis).
 EOF
 
 cat << 'EOF' > .agents/rules/circuit-breakers.md
