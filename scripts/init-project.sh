@@ -82,12 +82,20 @@ if [ ! -d ".git" ]; then
     git checkout -b main &>/dev/null || git branch -M main &>/dev/null || true
 fi
 
-# Ensure initial commit exists so that gh repo create works with --push
-if [ -z "$(git rev-parse --safe-for-write HEAD 2>/dev/null)" ] || [ -z "$(git log -n 1 2>/dev/null)" ]; then
+# Ensure initial commit exists with explicit fallback user authoring
+if [ -z "$(git log -n 1 2>/dev/null)" ]; then
     log_info "Creating initial placeholder commit..."
-    git checkout -b main 2>/dev/null || true
+    git branch -M main 2>/dev/null || true
     echo "# Bootstrapped Project" > README.md
     git add README.md
+    
+    GIT_AUTHOR_NAME="$(git config user.name 2>/dev/null || echo "Antigravity Agent")"
+    GIT_AUTHOR_EMAIL="$(git config user.email 2>/dev/null || echo "agent@antigravity.ai")"
+    
+    GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME" \
+    GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL" \
+    GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME" \
+    GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL" \
     git commit -m "chore: initial bootstrap commit" --no-verify 2>/dev/null || true
 fi
 
@@ -103,20 +111,30 @@ if ! git remote get-url origin &>/dev/null; then
     echo -e "  2) Public"
     echo -e "  3) Skip repository creation (I will configure remote manually)"
     echo -n "Enter choice [1-3]: "
-    read -r choice < /dev/tty
+    read -r choice < /dev/tty || choice="3"
     
     case "$choice" in
         1)
             repo_name=$(basename "$(pwd)")
             log_info "Creating private GitHub repository '$repo_name'..."
-            gh repo create "$repo_name" --private --source=. --remote=origin --push
-            log_success "Created private repository and pushed local commits."
+            if gh repo create "$repo_name" --private --source=. --remote=origin 2>/dev/null; then
+                log_success "Created private GitHub repository '$repo_name'."
+            else
+                log_warn "GitHub repository creation via gh CLI was skipped or repository already exists."
+            fi
+            log_info "Pushing initial commit to GitHub..."
+            git push -u origin main 2>/dev/null || git push -u origin master 2>/dev/null || log_warn "Initial push skipped or failed. You can push manually using 'git push -u origin main'."
             ;;
         2)
             repo_name=$(basename "$(pwd)")
             log_info "Creating public GitHub repository '$repo_name'..."
-            gh repo create "$repo_name" --public --source=. --remote=origin --push
-            log_success "Created public repository and pushed local commits."
+            if gh repo create "$repo_name" --public --source=. --remote=origin 2>/dev/null; then
+                log_success "Created public GitHub repository '$repo_name'."
+            else
+                log_warn "GitHub repository creation via gh CLI was skipped or repository already exists."
+            fi
+            log_info "Pushing initial commit to GitHub..."
+            git push -u origin main 2>/dev/null || git push -u origin master 2>/dev/null || log_warn "Initial push skipped or failed. You can push manually using 'git push -u origin main'."
             ;;
         *)
             log_warn "Skipped GitHub repository creation. Please configure origin remote manually using 'git remote add origin'."
@@ -246,6 +264,24 @@ if command -v dos2unix &>/dev/null; then
     dos2unix scripts/hooks/*.sh 2>/dev/null || true
 elif command -v sed &>/dev/null; then
     sed -i 's/\r$//' scripts/hooks/*.sh 2>/dev/null || true
+fi
+
+# Stage and commit all bootstrapped suite files
+log_info "Staging and committing bootstrapped autonomous developer suite files..."
+git add . 2>/dev/null || true
+
+GIT_AUTHOR_NAME="$(git config user.name 2>/dev/null || echo "Antigravity Agent")"
+GIT_AUTHOR_EMAIL="$(git config user.email 2>/dev/null || echo "agent@antigravity.ai")"
+
+GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME" \
+GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL" \
+GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME" \
+GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL" \
+git commit -m "feat(bootstrap): initialize autonomous developer suite [v5.0]" --no-verify 2>/dev/null || true
+
+if git remote get-url origin &>/dev/null; then
+    log_info "Pushing bootstrapped suite files to GitHub..."
+    git push origin main 2>/dev/null || git push origin master 2>/dev/null || true
 fi
 
 echo -e "${GREEN}======================================================================${NC}"
