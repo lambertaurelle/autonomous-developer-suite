@@ -1,0 +1,7 @@
+# Force LF (Unix) line endings across all text files and scripts in this repository
+* text=auto eol=lf
+*.sh text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.toml text eol=lf
+*.env* text eol=lf
