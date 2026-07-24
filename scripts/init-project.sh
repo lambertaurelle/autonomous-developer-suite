@@ -355,7 +355,9 @@ skills=(
 )
 
 for skill in "${skills[@]}"; do
-    cat << EOF > ".agents/skills/$skill/SKILL.md"
+    target_skill_file=".agents/skills/$skill/SKILL.md"
+    if [ ! -f "$target_skill_file" ]; then
+        cat << EOF > "$target_skill_file"
 # Skill: /$skill
 
 ## Persona
@@ -377,7 +379,10 @@ Standardized procedural definition for the /$skill skill execution.
 - Structured updates modifying target project configurations or files.
 - Clear, auditable traceability identifiers in output summaries.
 EOF
-    log_success "Generated SKILL.md for /$skill"
+        log_success "Generated SKILL.md for /$skill"
+    else
+        log_info "Preserved existing SKILL.md for /$skill"
+    fi
 done
 
 # ==============================================================================
