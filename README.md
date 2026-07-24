@@ -98,32 +98,70 @@ my-project/
 
 ### **Prerequisites**
 - Git installed and initialized.
+- GitHub CLI (`gh`) installed and authenticated (`gh auth login`).
 - Standard developer runtime (Python 3.8+ or Node.js 16+).
-- Recommended global packages (optional, but automatically utilized by hooks if present):
+- Recommended global packages (automatically detected and used if present):
   - Python: `ruff`, `pylint`, `pytest`, `coverage`
   - JS: `eslint`, `jest`
-  - Container / Security: `trivy`, `shellcheck`, `jq`
+  - Security/Container: `trivy`, `shellcheck`, `jq`
 
-### **Initialization Steps**
+---
 
-1. Clone or import this suite into your workspace:
-   ```bash
-   git clone <repository_url> agentic-suite
-   cd agentic-suite
-   ```
+### **Option 1: One-Liner Remote Initialization (Recommended)**
 
-2. Bootstap your existing or new project repository using the high-rigor initializer script:
-   ```bash
-   ./scripts/init-project.sh
-   ```
+You can instantly bootstrap **any empty directory or existing project** directly from GitHub without cloning this repository first.
 
-   *The script will programmatically:*
-   - Verify/initialize your Git repository.
-   - Construct the standard directory tree (Skills, Rules, Workflows, Docs, Src).
-   - Write the constitutional `AGENTS.md` and specialized Markdown rules.
-   - Generate default template schemas for all **9 skills** and **2 workflows**.
-   - Create and configure **7 custom bash hook scripts** under `scripts/hooks/`.
-   - Register and link verification hooks locally in `.git/hooks/pre-commit` and `.agents/hooks.json`.
+Open your terminal in your target project folder and run one of the following commands:
+
+**Using `curl` (Linux / WSL / macOS)**:
+```bash
+curl -fsSL https://raw.githubusercontent.com/lambertaurelle/autonomous-developer-suite/main/scripts/init-project.sh | bash
+```
+
+**Using `wget` (Linux / WSL / macOS)**:
+```bash
+wget -qO- https://raw.githubusercontent.com/lambertaurelle/autonomous-developer-suite/main/scripts/init-project.sh | bash
+```
+
+**Using `bash <(...)`**:
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/lambertaurelle/autonomous-developer-suite/main/scripts/init-project.sh)
+```
+
+*What the one-liner initializer does automatically:*
+1. **GitHub Setup**: Verifies `gh` CLI authentication and interactively prompts to create a private or public GitHub repository (`gh repo create`) if no `origin` remote exists.
+2. **Directory Architecture**: Constructs `.agents/skills/`, `.agents/rules/`, `.agents/workflows/`, `docs/specs/`, `src/core/`, `src/shell/`, and `scripts/hooks/`.
+3. **Downloads Production Governance & Skills**: Pulls all 31 full production files (`AGENTS.md`, 9 skills, rules, workflows, templates, and pre-commit hook scripts) directly from GitHub raw endpoints.
+4. **Enforces Line Endings**: Creates `.gitattributes` to enforce Unix LF line endings across Windows, Linux, and WSL.
+5. **Configures Verification Gates**: Makes all verification hook scripts executable (`chmod +x scripts/hooks/*.sh`).
+
+---
+
+### **Option 2: Local Clone Initialization**
+
+If you prefer to clone this repository into a new workspace:
+
+```bash
+git clone https://github.com/lambertaurelle/autonomous-developer-suite.git my-project
+cd my-project
+```
+
+Your cloned project comes pre-configured with all 31 governance files, skills, and hooks!
+
+If you ever want to re-run or re-initialize:
+```bash
+./scripts/init-project.sh
+```
+
+---
+
+### **Next Steps: Start Product Scoping**
+
+Once initialized, start your interactive product requirements session by calling the Product Owner persona:
+
+```text
+/interview-prd
+```
 
 ---
 
