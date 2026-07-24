@@ -1,94 +1,76 @@
 ---
 name: specify
-description: Detailed Contract-First Technical Specification Drafter
+description: Pull a user story from GitHub via the GitHub MCP server, extract its acceptance criteria, translate them into SPEC.md updates and test cases, validate automatically via /review-spec, and auto-land on the issue branch for autonomous execution. Use when starting work from an issue ("/specify #124", "pull the story", "what does this ticket need").
 license: MIT
 metadata:
   persona: Engineering / Tech Lead
-  type: Contract Drafting / Technical Spec
-  version: 3.0.0
+  type: Autonomous Contract Drafting / Behavioral Specification
+  version: 4.0.0
 ---
 
-# Skill: Detailed Technical Specification Drafting (`/specify`)
+# Skill: Detailed Behavioral Specification Drafting (`/specify`)
 
-## 1. Purpose & Strategic Goal
-The `/specify` skill represents the final step of design before any code execution starts inside the `/goal` development loop. Its purpose is to refine a high-level backlog issue (from `docs/specs/issue-*.md`) into an incredibly precise, type-safe, contract-first technical specification.
+Bring intent **in** from GitHub and turn it into the artifacts engineering actually works from. GitHub is intake; `SPEC.md` is the contract the agent obeys. This skill runs **fully autonomously inside the development loop**, using the adversarial `/review-spec` sub-agent to validate specifications without stopping for human-in-the-loop chat prompts.
 
-By drafting explicit schema boundaries (Zod, Pydantic, TypeScript interfaces) and locking method signatures *before* writing logic, we completely eliminate agent assumptions during coding. It enforces the separation of concern, detailing exactly what goes into the deterministic **Functional Core (`src/core/`)** and what side effects occur in the **Imperative Shell (`src/shell/`)**.
+## When to use
+- Starting an autonomous execution cycle or a task from a GitHub Issue inside `/goal`.
 
----
+## Inputs — and ONLY these (keep the context tight)
+`/specify` produces one file, `SPEC.md`. To do that it needs exactly three inputs:
+1. the **GitHub Issue** (via the `github` MCP) — the intake;
+2. **`templates/SPEC.template.md`** (this skill's own template) — the required shape;
+3. the **current `SPEC.md`**, *only if it already exists* — to edit in place and assign the next rule id.
 
-## 2. Agent Persona
-- **Role**: Software Engineering Tech Lead & Technical Architect
-- **Tone**: Pragmatic, detail-obsessed, highly logical, and deeply committed to type safety.
-- **Attributes**: Expert in defensive design, fanatical about pure functions, and structured in defining TDD test cases.
+**Do not read the rest of the repository to "understand" it.** Reading unrelated files wastes tokens and risks importing scope that is not in the Issue. In particular do **not** open:
+- `docs/PRD.md` — the Product Owner's artifact; your intake is the **Issue**, not the PRD;
+- `.agents/conventions/code-layout.*`, `pyproject.toml`, `src/`, `AGENTS.md` — these are about *where code goes* and are `/tdd-build`'s concern, irrelevant to a behavioral spec;
+- any filled-in **sample/example** spec — **derive the spec from the Issue**; never copy an example.
 
----
+If you catch yourself listing or reading files beyond the three inputs above, stop — you have what you need.
 
-## 3. Inputs & Outputs
-- **Inputs**:
-  - Target issue specification (e.g., `docs/specs/issue-01.md`).
-  - Immutable reference file `docs/architecture.md`.
-- **Outputs**:
-  - A highly detailed, ready-to-implement technical specification file, placed in the Review Queue.
+**Structure is mandatory, content is derived.** Conform to `SPEC.template.md`'s sections exactly (Overview, Domain model, Global constraints, Rules, Precedence order, Glossary) — this fixed shape is what makes specs reproducible and is **enforced by linter gates** (the gate denies a `SPEC.md` that is missing a canonical section). Every word of *content* must come from the Issue, not from a template placeholder or an example.
 
----
+## Tools & Sub-Agents
+- **GitHub MCP server** (`github`) — used to fetch the issue and update its state/labels.
+- **`/review-spec` Sub-Agent** — adversarial quality gatekeeper that automatically validates drafted `SPEC.md` updates against `docs/PRD.md` and `docs/architecture.md`.
 
-## 4. Procedural Steps
+## Spec structure
+`SPEC.md` follows the canonical format in `templates/SPEC.template.md`, **resolved relative to this skill's own directory** (the folder containing this `SKILL.md`). The template defines: an overview, a domain model, global constraints, a list of **rules** with stable sequential IDs (`R1`, `R2`, …), a precedence order, and a glossary. Rule IDs are never reused or renumbered. Read the template before editing so your changes conform to it.
 
-### Step 1: Analyze Issue Scope
-- Parse the target issue spec. Cross-reference it with the immutable architecture rules.
-- Identify the core domain entity structure and the required system interactions.
+## Procedure
+1. **Fetch** the story by number (e.g. `#124`) via the `github` MCP server.
+2. **Evaluate quality**: The story must have (a) an explicit acceptance-criteria section, and (b) at least one outcome stated in testable terms (a concrete input → expected result). If either is missing, or the story is otherwise unimplementable, comment on the issue requesting clarification and stop execution. Resume once the story is updated.
+3. **Extract** the acceptance criteria and any constraints; restate them as a checklist in your own words.
+4. **Draft the proposed `SPEC.md`**:
+   - Create or update the draft artifact based on `templates/SPEC.template.md` or the current `SPEC.md`.
+   - Assign each new rule the **next sequential `rule_id`** (`R1`, `R2`, …); never reuse or renumber existing IDs.
+   - **Keep the spec self-sufficient.** `/tdd-build` reads only `SPEC.md`, never the issue. Update **Domain model**, **Global constraints**, **Precedence order**, and **Glossary** in the *same* edit.
+   - **Stay strictly within THIS issue's criteria.** Model only what the acceptance criteria require.
+5. **Map to tests**: List the test cases the criteria imply, including edge/precedence cases and the expected `outcome` and `rule_ids`.
+6. **Automated Adversarial Review (`/review-spec`) — NO HITL PAUSE**:
+   - Invoke the `/review-spec` sub-agent to audit the drafted `SPEC.md` against `docs/PRD.md` and `docs/architecture.md`.
+   - **If Approved**: Proceed immediately to step 7.
+   - **If Rejected**: Read the reviewer feedback, auto-revise `SPEC.md` (return to step 4), and re-submit to `/review-spec` (up to the 5-attempt circuit breaker limit).
+7. **Auto-Land on Branch & Commit**:
+   - Create and check out `issue/<number>-<short-kebab-case-title>` (e.g. `git checkout -b issue/124-contractor-review`).
+   - Write the approved content directly to `SPEC.md` in the repo and commit:
+     `feat(spec): add rules for issue #<number> [Rn] (#<number>)`
+8. **Mark Issue In-Progress**: Via the `github` MCP server, transition the GitHub issue state to `in-progress`.
+9. **Seamless Handoff**: Pass control directly to the autonomous coding loop (`/tdd-build`).
 
-### Step 2: Formulate Pure Functional Core (FC) Contracts
-- Design the deterministic layer inside `src/core/`.
-- **Requirements**:
-  - Define exact function/class names and method signatures.
-  - Specify input parameters with strict data types.
-  - Define exact output formats, returning deterministic values.
-  - Declare a list of possible exception types or validation errors.
-  - Write down explicit business invariants (e.g., "The interest calculation must never return a negative float").
-  - *No imports allowed*: No SQL, database connections, files, environment variables, or HTTP frameworks.
+## Guardrails
+- **100% Autonomous**: Executes without pausing for human chat confirmation. Quality is enforced by `/review-spec`.
+- The story is **intake only**. If the story and `SPEC.md` disagree, surface the conflict on the issue; `SPEC.md` decides.
+- **Never widen scope beyond the criteria.** Add no field, `outcome`, rule, or invariant that THIS issue's acceptance criteria do not require.
+- Circuit breaker hard limit: max 5 spec revision attempts if rejected by `/review-spec`.
 
-### Step 3: Formulate Imperative Shell (IS) Infrastructure Design
-- Design the technical wrapper layer inside `src/shell/` to handle side effects.
-- **Requirements**:
-  - Outline database queries, schema tables, indexes, and write transactions.
-  - Define HTTP routes, query parameters, headers, status codes, and JSON request/response formats.
-  - Detail third-party API configurations or service providers.
-  - Map how Shell code captures raw inputs, feeds them into Core functions, catches Core exceptions, and translates them back to database writes or API responses.
-
-### Step 4: Establish Type-Safe Data Contracts
-- Write out the strict schemas that bind the Core and Shell together.
-- Use explicit libraries (e.g., Zod for TypeScript, Pydantic for Python, schemas for Go) to validate data boundaries:
-  ```typescript
-  // Example Contract Schema
-  export const UserRegistrationSchema = z.object({
-    email: z.string().email(),
-    password: z.string().min(12),
-    role: z.enum(['admin', 'editor', 'viewer'])
-  });
-  ```
-
-### Step 5: Outline TDD-Ready Preconditions and Postconditions
-- Define the exact state assertions and return outputs that unit tests must execute to confirm successful implementation.
-- This serves as the blueprint for the TDD agent in `/tdd-build`.
-
-### Step 6: Sync Specification to GitHub (`gh issue edit`)
-- Once the technical specification is refined locally in `docs/specs/issue-XX.md`, run the following `gh` command to push the updated body to GitHub:
-  ```bash
-  gh issue edit <number> --body-file "docs/specs/issue-XX.md"
-  ```
-  Where `<number>` is the GitHub Issue ID extracted from the file's metadata.
-- This ensures that the GitHub Issue stays 100% in sync with our local design documents.
-
----
-
-
-## 5. Edge Case Handling
-
-- **Ambiguous Interface Data Types**:
-  - *Action*: If an endpoint or schema is specified as "any" or "object" without explicit nested properties, stop execution immediately. Enforce strict, nested property validation before allowing the spec to exit the drafting phase.
-- **Leak of Database or Network Dependency into Core**:
-  - *Action*: If the tech lead agent notices a database query or network helper being designed inside `src/core/`, raise a severe boundary violation. Refactor the implementation using an adapter pattern, keeping the database inside the Imperative Shell and injecting clean data models into the Core.
-- **Missing Architecture Baseline Match**:
-  - *Action*: If the spec attempts to implement a stack change (e.g., using NoSQL DB when Postgres is sealed), abort the specification and notify the user of an architectural drift.
+## Verification
+Before exiting this skill, you MUST verify:
+- [ ] You fetched the issue using the `github` MCP server.
+- [ ] The story passed the quality check (explicit criteria + testable outcome).
+- [ ] `SPEC.md` conforms to `templates/SPEC.template.md`, with new rules assigned the next sequential `rule_id`.
+- [ ] The spec is **self-sufficient**: any new field, outcome, or term is reflected in the Domain model / Global constraints / Precedence order / Glossary.
+- [ ] The spec passed automated adversarial audit via `/review-spec`.
+- [ ] Created/checked out `issue/<number>-<title>` branch, wrote `SPEC.md` to the repo, and committed it.
+- [ ] Used `github` MCP server to transition issue state to `in-progress`.
+- [ ] Passed control to `/tdd-build` with zero HITL interruption.

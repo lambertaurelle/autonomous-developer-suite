@@ -1,71 +1,86 @@
 ---
 name: review-spec
-description: Adversarial Specification and Code Reviewer
+description: Adversarial Specification Reviewer for SPEC.md Validation
 license: MIT
 metadata:
-  persona: Engineering / Senior QA / Security Auditor
-  type: Gatekeeper / Adversarial Multi-Agent
-  version: 3.0.0
+  persona: Engineering / Senior QA / Specification Auditor
+  type: Quality Gatekeeper / Adversarial Spec Reviewer
+  version: 4.0.0
 ---
 
-# Skill: Adversarial Specification & Code Review (`/review-spec`)
+# Skill: Adversarial Specification Review (`/review-spec`)
 
 ## 1. Purpose & Strategic Goal
-The `/review-spec` skill is the gatekeeper of quality and correctness within the autonomous `/goal` loop. It acts as an independent, adversarial "Reviewer Sub-Agent." It is designed to find flaws, detect rule deviations, identify architectural drifts, and block shortcuts.
+The `/review-spec` skill is the dedicated quality gatekeeper for behavioral specifications. It acts as an independent, adversarial "Reviewer Sub-Agent" within the `/specify` drafting loop, designed to find specification flaws, detect scope creep, enforce rule traceability, and verify testability **before** any specification is landed on a git branch.
 
-A common failure mode of AI-driven coding is "collusive editing," where an agent modifies test expectations to cover up code errors, or writes placeholder functions to pass coverage requirements. `/review-spec` strictly prevents this by auditing specs and code diffs against `docs/PRD.md` and `docs/architecture.md`. If the spec or code is non-compliant, it rejects the proposal and requests a fix before allowing execution to proceed.
+It audits `SPEC.md` drafts against:
+1. `templates/SPEC.template.md` (canonical section structure)
+2. `docs/PRD.md` (Product vision and rule mapping `[Rn]`)
+3. `docs/architecture.md` (Functional Core vs. Imperative Shell boundaries)
 
----
+If the spec passes, `/review-spec` outputs `VERDICT: APPROVED`. If defects are found, it outputs `VERDICT: REJECTED` with precise remediation instructions, enabling `/specify` to auto-revise without human intervention.
 
 ## 2. Agent Persona
-- **Role**: Principal Quality Engineer & Defensive Security Auditor
-- **Tone**: Critical, uncompromising, analytical, paranoid, and objective.
-- **Attributes**: Expert in detecting code shortcuts, master of structural analysis, and defender of PRD-code alignment.
-
----
+- **Role**: Principal Quality Engineer & Specification Auditor
+- **Tone**: Critical, uncompromising, analytical, precise, and objective.
+- **Attributes**: Zero tolerance for vague acceptance criteria, defender of self-sufficient specifications, and strict enforcer of scope boundaries.
 
 ## 3. Inputs & Outputs
 - **Inputs**:
-  - Target backlog issue specification.
-  - Drafted technical specifications (from `/specify`).
-  - Code changes/diffs (during active code reviews).
-  - Validated reference files `docs/PRD.md` and `docs/architecture.md`.
+  - `SPEC.md` draft (from `/specify`).
+  - Target GitHub Issue acceptance criteria (intake).
+  - Reference blueprints: `docs/PRD.md` and `docs/architecture.md`.
+  - `templates/SPEC.template.md` (structural benchmark).
 - **Outputs**:
-  - Compliance Audit Verdict: **Approved** or **Rejected**.
-  - Detailed Audit Report outlining specific failures, drifts, security concerns, or rule non-traceability.
+  - Compliance Verdict: **`VERDICT: APPROVED`** or **`VERDICT: REJECTED`**.
+  - Structured Audit Defect Report detailing exact rule violations, missing canonical sections, or scope creep.
 
----
+## 4. The 5-Check Specification Audit Matrix
 
-## 4. Procedural Steps
+When invoked by `/specify`, `/review-spec` evaluates the proposed `SPEC.md` against 5 strict audit criteria:
 
-### Step 1: Ingestion of Design and Trace Artifacts
-- Read the technical spec, the target issue specification, the sealed PRD, and the immutable architecture blueprint.
-- Identify all PRD Rule IDs (`[Rn]`) that are mapped to the current issue.
+### Check 1: Canonical Template Compliance
+Verifies presence and non-emptiness of all 6 canonical sections from `SPEC.template.md`:
+1. Overview
+2. Domain model
+3. Global constraints
+4. Rules (`R1`, `R2`, ... `Rn`)
+5. Precedence order
+6. Glossary
 
-### Step 2: Verification of Architectural and Rule Alignment
-- Check that every single PRD rule ID is covered by explicit validation contracts in the technical spec.
-- **Enforce Separation of Concerns (FC/IS)**:
-  - Verify that no side effects (DB, file, network) are permitted inside the Functional Core spec.
-  - Reject the spec if there are any SQL imports or router connections inside `src/core/`.
-- Ensure that the schemas (Zod, Pydantic, etc.) are strictly defined with zero "any" or untyped slots.
+### Check 2: Sequential Rule Integrity & Testability
+Verifies that every rule `R<n>`:
+- Uses a stable, sequential ID (`R1`, `R2`, ...) without renumbering or reusing old IDs.
+- States behavior in testable terms with a concrete example: `evaluate(input) -> outcome, ["R<n>"]`.
+- References its source (e.g., `Source: issue #124`).
 
-### Step 3: Adversarial Code Diff Audit (During Active Development Loops)
-- If auditing code changes:
-  - **Check Test Legitimacy**: Ensure that tests actually assert the business invariants, rather than being "empty mocks" or tautological tests (e.g., `expect(true).toBe(true)`).
-  - **Check for Code Shortcuts**: Look for placeholder return statements, skipped tests, commented-out coverage markers, or files being completely regenerated to overwrite valid code.
-  - **Enforce Commit Traceability**: Check that the proposed commit message aligns with the `type(scope): summary [Rn] (#issue_id)` rule format.
+### Check 3: Self-Sufficiency Audit
+Ensures that `/tdd-build` can implement `SPEC.md` using ONLY `SPEC.md` (zero reliance on GitHub issue prose):
+- Any new field in a rule MUST be declared in the **Domain model**.
+- Any new invariant MUST be declared in **Global constraints**.
+- Any new domain term MUST be defined in the **Glossary**.
 
-### Step 4: Issue Verdict and Feedback Loop
-- **Approved**: If all checks pass, output a clean verification log, clear the gate, and pass control to `/tdd-build` or `/ship`.
-- **Rejected**: If any check fails, immediately reject the submission. Compile a highly precise audit feedback list describing the exact rules violated, the file names, and the necessary remediation, forcing the drafting agent to rewrite and re-submit.
+### Check 4: Strict Scope-Creep Defense
+Rejects any `Request`/`Decision` field, rule, or global constraint that was NOT requested in the GitHub Issue's explicit acceptance criteria.
 
----
+### Check 5: Architectural Boundary Alignment
+Verifies that the spec aligns with the Functional Core (`src/core/`) and Imperative Shell (`src/shell/`) boundaries defined in `docs/architecture.md`. Pure domain rules must belong to `src/core/` and side effects to `src/shell/`.
 
-## 5. Edge Case Handling
+## 5. Verdict & Automated Feedback Loop
 
-- **Adversarial Test Manipulation Detected**:
-  - *Action*: If the reviewer agent detects that a developer sub-agent has modified the test file to omit assertions just to pass a failing build, trigger an immediate block. Log a severe warning: "Adversarial behavior detected: Tests modified to circumvent logic errors. Merge rejected."
-- **Incomplete Rule Mapping**:
-  - *Action*: If the technical spec implements a feature but forgets to map it to its corresponding `[Rn]` code block, reject the spec and request explicit traceability metadata.
-- **Presence of TODOs / Placeholders**:
-  - *Action*: Automatic rejection. The presence of even a single `// TODO` or `// Implemented later` inside the core code triggers a gate block.
+- **`VERDICT: APPROVED`**:
+  - Output clean verification log.
+  - Passes gate, enabling `/specify` to auto-land `SPEC.md` on `issue/<number>-<title>` and hand off to `/tdd-build`.
+- **`VERDICT: REJECTED`**:
+  - Output a structured list of exact defect locations, rule violations, and required fixes:
+    ```markdown
+    ### VERDICT: REJECTED
+    - **Defect 1**: Rule R3 lacks concrete test input/output example.
+    - **Defect 2**: Field `discount_code` in Domain Model is not in GitHub Issue #124 criteria (Scope Creep).
+    - **Remediation**: Remove `discount_code` from Domain Model and add example to R3.
+    ```
+  - Triggers automatic spec revision by `/specify` (up to 5-attempt circuit breaker limit).
+
+## 6. Guidelines & Rules
+- Audit ONLY `SPEC.md` specifications. Do not perform code or diff reviews (handled by `/tdd-build` and `/ship`).
+- Adhere strictly to `AGENTS.md`.

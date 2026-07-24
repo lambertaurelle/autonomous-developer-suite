@@ -50,8 +50,11 @@ Bootstrapping a project with this suite deploys the following structure:
 ```
 my-project/
 ├── AGENTS.md                    # Project Constitution (FC/IS, cascading, circuit breakers)
+├── SPEC.md                      # Active Behavioral Specification Contract (archived in docs/specs/)
 ├── .agents/
 │   ├── hooks.json               # Deterministic trigger definitions
+│   ├── default-ruff.toml        # Fallback Ruff Python linter configuration
+│   ├── default-eslint.json      # Fallback ESLint JavaScript/TypeScript linter configuration
 │   ├── rules/                   # Supreme agent compliance rules
 │   │   ├── fc-is-architecture.md# [R-ARCH] Functional Core vs Imperative Shell
 │   │   ├── model-cascading.md   # [R-MODEL] Gemini model cascading & token routing (https://ai.google.dev/gemini-api/docs/latest-model)
@@ -64,20 +67,20 @@ my-project/
 │       ├── interview-prd/       # [PO] Guided scoping and web search matrix
 │       ├── audit-prd/           # [PO] 360° completeness grid audit
 │       ├── arch-gate/           # [PO/ENG] Upstream technology decision gate
-│       ├── prd2backlog/         # [PO] Backlog generator
-│       ├── specify/             # [ENG] Specification drafter
+│       ├── prd2backlog/         # [PO] Backlog generator & reconciliation (templates/STORY.template.md)
+│       ├── specify/             # [ENG] Specification drafter (templates/SPEC.template.md)
 │       ├── review-spec/         # [ENG] Adversarial spec reviewer
-│       ├── tdd-build/           # [ENG] Test-driven core/shell builder
+│       ├── tdd-build/           # [ENG] Test-driven core/shell builder (templates/code-layout.*)
 │       ├── e2e-test/            # [ENG] Playwright E2E validator
 │       └── ship/                # [ENG] Main branch rule-traceability merger
 ├── docs/                        # Specifications, contracts, and state
 │   ├── PRD.md                   # Validated PRD (100% 360° completeness)
 │   ├── architecture.md          # Infrastructure contracts sealed by arch-gate
-│   └── specs/                   # Detailed specifications per issue
+│   └── specs/                   # Archived issue specifications
 ├── scripts/
 │   ├── init-project.sh          # Automated project initializer script
 │   └── hooks/                   # Zero-token hook scripts
-│       ├── pre-commit-lint.sh   # Syntactic and styling checker
+│       ├── pre-commit-lint.sh   # Syntactic/styling checker & commit message format gate
 │       ├── pre-commit-test.sh   # Run tests + apply isomorphic log trimming
 │       ├── pre-commit-coverage.sh # Validate >=90% test coverage floor
 │       ├── pre-commit-security.sh # Run Trivy security checks + secrets search
@@ -129,17 +132,17 @@ my-project/
 The suite divides responsibility between two primary agent personas:
 
 ### **4.1 Product Owner Persona**
-- **/interview-prd**: Leads an interactive interview with the user. In the event of an ambiguous engineering decision, the agent activates Web Search, evaluates state-of-the-art options, and renders a comparative analysis decision matrix.
-- **/audit-prd**: Rigid linter auditing the **6 Scoping Pillars** (Functional Vision, Architecture, Data Strategy, Deployment, Security, and UX/Non-Functional). Prevents downstream execution if sections are missing.
-- **/prd2backlog**: Decomposes the sealed PRD into a prioritized list of atomic, isolated issue files in `docs/specs/`.
+- **/interview-prd**: Leads an interactive scoping interview with the Product Owner to generate `docs/PRD.md` following the canonical 12-section structure. Evaluates the 6-pillar 360° Completeness Grid, creates multi-pillar User Stories, and triggers Augmented Recommendation Mode (Web Search Matrix) when engineering choices are unassigned.
+- **/audit-prd**: Rigid 5-check linter auditing `docs/PRD.md` against the 12 canonical sections, 6-pillar grid, multi-pillar user story backlog, and testable acceptance criteria. Technically blocks downstream execution until 100% compliant, then seals `docs/PRD.md` (`status: sealed`).
+- **/prd2backlog**: Decomposes the sealed PRD into a prioritized list of atomic user stories and publishes or reconciles them as GitHub Issues via the `github` MCP server (or `gh issue create`).
 
 ### **4.2 Engineering Persona**
-- **/arch-gate**: Analyzes the PRD to produce the immutable contract `docs/architecture.md`. Once accepted by the human, any modifications to this file without bypass validation will trigger the Architecture Drift Hook.
-- **/specify**: Drafts exact technical specifications (inputs, outputs, database contracts) for the target issue before a single line of code is produced.
-- **/review-spec**: An independent adversarial reviewer sub-agent. Rejects the draft if there is drift from `docs/architecture.md` or PRD rules.
-- **/tdd-build**: Executes a strict **TDD Red-Green-Refactor** cycle using stateless sub-agents. Isolates business rules to `src/core/` and side effects to `src/shell/`. Enforces >=90% test coverage.
+- **/arch-gate**: Analyzes the sealed PRD to produce the immutable blueprint `docs/architecture.md`. Evaluates data volume and query semantics to select the optimal AI Data Integration Pattern (Pattern A: Direct Context Injection, Pattern B: Text-to-SQL / Dynamic Tool Use, Pattern C: RAG / Vector Search), enforces Functional Core (`src/core/`) vs. Imperative Shell (`src/shell/`) boundaries, presents a single-screen decision matrix to the human architect, and registers the Architecture Drift Hook.
+- **/specify**: Pulls user story acceptance criteria from GitHub via the `github` MCP server and drafts `SPEC.md` adhering to `templates/SPEC.template.md`. Runs **fully autonomously** inside the development loop, using the adversarial `/review-spec` sub-agent for automated specification audits before auto-landing on an `issue/<number>-<title>` branch without human chat prompts.
+- **/review-spec**: Dedicated adversarial reviewer sub-agent that audits `SPEC.md` drafts from `/specify` against `templates/SPEC.template.md`, `docs/PRD.md`, and `docs/architecture.md`. Evaluates sequential rule IDs (`R1`, `R2`, ...), self-sufficiency, testability, and zero scope-creep.
+- **/tdd-build**: Executes a strict **TDD Red-Green-Refactor** cycle using stateless sub-agents. Enforces pure Functional Core isolation (zero DB/IO imports in `src/core/`), zero `TODO` placeholders, real test assertion density, and >=90% test coverage.
 - **/e2e-test**: Deploys a browser agent running Playwright to simulate end-to-end user journeys against the integrated application.
-- **/ship**: Automates merging to the main branch, validating trace IDs, and formatting commits to ensure full auditability.
+- **/ship**: Executes pre-commit verification gates (linting, zero TODOs, FC purity, >=90% test coverage, Trivy security scans), automates GitHub PR creation via `gh pr create`, and performs Squash & Merge to `main` with rule-traceability commit formatting `type(scope): summary [Rn] (#issue_id)`.
 
 ---
 
@@ -147,9 +150,10 @@ The suite divides responsibility between two primary agent personas:
 
 Our hooks act as immediate circuit-breakers to protect repository integrity:
 
-### **1. Pre-Commit Lint (`pre-commit-lint.sh`)**
+### **1. Pre-Commit Lint & Commit Traceability (`pre-commit-lint.sh`)**
 - Scans staged files on commit.
-- Runs `ruff` or `pylint` on Python files; runs `eslint` on JS/TS; runs `shellcheck` on `.sh` scripts.
+- Enforces mandatory commit message rule traceability convention: `type(scope): summary [Rn] (#issue_id)`.
+- Runs `ruff` or `pylint` on Python files (falling back to `.agents/default-ruff.toml`); runs `eslint` on JS/TS (falling back to `.agents/default-eslint.json`); runs `shellcheck` on `.sh` scripts.
 - Falls back to native compiler validation (e.g. `py_compile`, `node -c`) if premium tooling is absent.
 
 ### **2. Pre-Commit Test Runner (`pre-commit-test.sh`)**

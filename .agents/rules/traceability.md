@@ -13,7 +13,7 @@ Traceability must form an unbroken, bi-directional verification loop:
          ↕ (PRD Decomposition)
   [Issue ID (#xxx)]
          ↕ (Detailed Specification)
-  [Technical Spec (specs/issue-xxx.md)]
+  [Technical Spec (SPEC.md / docs/specs/issue-xxx.md)]
          ↕ (Type-Driven Contract)
   [Source Code Annotations (src/core/ & src/shell/)]
          ↕ (TDD Verification)
@@ -34,8 +34,8 @@ Traceability must form an unbroken, bi-directional verification loop:
     *   *Examples*: `[R1.1]`, `[R1.2]`, `[R10.3]`.
 
 ### **2.2 Issue and Backlog IDs (`#xxx`)**
-*   Every task specification generated under `docs/specs/` must be mapped to a specific GitHub issue number.
-*   **GitHub Synchronization**: Issue creation is managed automatically by `/prd2backlog` using the `gh` CLI. The resulting GitHub issue number (e.g., `#123`) is dynamically written back to the local `docs/specs/issue-*.md` file.
+*   Every task specification `SPEC.md` must map to a specific GitHub issue number.
+*   **GitHub Synchronization**: Issue creation is managed automatically by `/prd2backlog` using the `github` MCP server (or `gh` CLI). The assigned GitHub Issue ID (e.g., `#123`) is dynamically linked to `SPEC.md`.
 *   **Format**: `#<number>` (e.g., `#12`, `#345`).
 
 

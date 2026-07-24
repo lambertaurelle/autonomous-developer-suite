@@ -4,103 +4,91 @@ description: Product Requirement Decomposition and Backlog Generator
 license: MIT
 metadata:
   persona: Product Owner
-  type: Decomposition / Automation
-  version: 3.0.0
+  type: Decomposition / Backlog Generation
+  version: 4.0.0
 ---
 
 # Skill: Product Requirement Decomposition (`/prd2backlog`)
 
 ## 1. Purpose & Strategic Goal
-The `/prd2backlog` skill takes the sealed `docs/PRD.md` and the immutable `docs/architecture.md` and decomposes them into a prioritized backlog of highly detailed, atomic issue specifications. 
+The `/prd2backlog` skill takes the sealed `docs/PRD.md` and `docs/architecture.md` and turns them into an intake backlog of atomic User Story issues on GitHub using the `github` MCP server.
 
-The primary goal is to ensure 100% trace-integrity. No feature is added to the backlog unless it is directly mapped to a PRD requirement ID (such as `[R1]`, `[R2]`). By breaking down the complex product specification into tiny, self-contained functional components with explicit contract borders, background agents can build, test, and ship them sequentially with minimal error risk.
+It operates with **100% trace-integrity** and **idempotent reconciliation**:
+- Each story maps to PRD requirement IDs (`[R1]`, `[R2]`) and links to `docs/PRD.md#us<n>`.
+- Stores a hidden `prd-sync` HTML marker in each issue body to prevent duplicate creations and detect incremental updates without full body diffing.
+- Applies real GitHub metadata labels for priority (`must-have`, `should-have`, `could-have`) and draft state (`status:draft`).
 
----
+This skill **never** writes `SPEC.md` or code files. It produces product-level backlog intake in GitHub, which engineering sub-agents pull during `/specify`.
 
 ## 2. Agent Persona
 - **Role**: Agile Product Owner & Senior Technical Business Analyst
-- **Tone**: Analytical, structured, direct, precise, and highly execution-oriented.
-- **Attributes**: Obsessed with task granularity, master of dependency sorting, and champion of atomic implementation scope.
-
----
+- **Tone**: Analytical, structured, direct, precise, and execution-oriented.
+- **Attributes**: Champion of 100% PRD rule traceability, master of incremental backlog reconciliation, and protector of task granularity.
 
 ## 3. Inputs & Outputs
 - **Inputs**:
-  - Sealed `docs/PRD.md`.
+  - Sealed `docs/PRD.md` (must be `status: sealed`).
   - Immutable `docs/architecture.md`.
+  - Issue Template: `templates/STORY.template.md`.
 - **Outputs**:
-  - A prioritized backlog summary page in the console.
-  - Individual issue specification files saved as `docs/specs/issue-01.md`, `docs/specs/issue-02.md`, etc.
+  - Published GitHub Issues created or updated via `github` MCP server following `STORY.template.md`.
+  - Summary report presented to PO (new creations, updates, skips, and removed story flags).
 
----
+## 4. Stage Boundaries: `/prd2backlog` vs. `/specify`
 
-## 4. Procedural Steps
+| Stage | Responsibility & Scope | Target Output |
+| :--- | :--- | :--- |
+| **`/prd2backlog` (Product Owner Intake)** | **Product Intent & User Acceptance**: Defines persona story statement, explicit **PRD Source** link (`docs/PRD.md#us<n>`), PRD rule mapping (`[Rn]`), observable acceptance criteria checklist, pillar, priority label, and `status:draft` label. Pure product perspective—zero code structure references. | GitHub Issues created/updated via `github` MCP server using `STORY.template.md`. |
+| **`/specify` (Engineering Contract)** | **Low-Level Executable Behavioral Contract**: Pulls GitHub Issue intake, translates criteria into formal sequential rules (`R1`, `R2`, ...), typed domain models (Request/Decision fields), global invariants, FC/IS layer boundaries, precedence order, glossary, and test assertions. | `SPEC.md` auto-landed on `issue/<number>-<title>` branch. |
 
-### Step 1: Ingestion of Scoping Baselines
-- Read both `docs/PRD.md` and `docs/architecture.md` into context.
-- Identify the explicit rules, functional milestones, and data constraints.
+## 5. Ingestion Contract & Tolerant Parsing
+The skill parses `docs/PRD.md` Section 8 with light, tolerant anchors:
+- **Story identity**: Matches `US1`, `[US1]`, `US-1`, `US 1` (case-insensitive) and normalizes to lower-case key `us<n>`.
+- **Acceptance criteria**: Case-insensitive match on "acceptance criteria" prose, transforming them into `Given / When / Then` format.
+- **Priority**: Derives priority from PRD MoSCoW headings and maps to GitHub labels (`must-have`, `should-have`, `could-have`). Prompts the PO if ambiguous.
+- **Section SHA**: Computes `src-sha` = short SHA hash of the exact story section text block in `docs/PRD.md`.
 
-### Step 2: Define Functional Core vs. Imperative Shell Borders per Issue
-- For every business epic, decompose it into independent functional increments.
-- Group the increments such that each issue can be developed atomically.
-- Clearly differentiate between:
-  - **Core Requirements**: Pure mathematical and validation functions, algorithmic transforms, or core domain models.
-  - **Shell Requirements**: DB schema migrations, controller routers, UI page screens, and external HTTP network handlers.
+## 6. Hidden Reconciliation Marker
+Each created issue carries a hidden HTML marker stamped at the top of its body:
+```html
+<!-- prd-sync: key=us<n> src-sha=<short_hash> -->
+```
 
-### Step 3: Enforce Rule-Traceability Mapping
-- Assign rule IDs (`[R1]`, `[R2]`, etc.) to every single requirement inside `docs/PRD.md`.
-- Ensure each issue file explicitly declares which PRD Rule IDs it fulfills.
-- *Constraint*: Every single line of code written in the future must trace back to an issue that traces back to a specific `[Rn]` identifier.
+## 7. Procedural Steps
 
-### Step 4: Perform Dependency Sorting
-- Order the generated backlog so that basic infrastructure, migrations, and low-level Functional Core data models are built before the Imperative Shell wrappers and UI screens.
-- Prevent circular dependencies by establishing strict linear pipelines of issue specifications.
+### Step 1: Read & Parse Sealed PRD
+- Verify `docs/PRD.md` is in `status: sealed`.
+- Parse story keys tolerantly (`US1` -> `us1`), extract story text, and compute `src-sha` for each story.
 
-### Step 5: Write the Issue Specifications (`docs/specs/issue-*.md`)
-- Create the subdirectory `/docs/specs/` if it does not exist.
-- Write each issue specification file.
-- **Each specification file must adhere to this template**:
-  ```markdown
-  # Issue Specification: [Issue Title]
-  ## Metadata
-  - Issue ID: #xxx
-  - Rule Traceability IDs: [R1, R2]
-  - Priority: [High/Medium/Low]
-  
-  ## User Journey
-  Describe the precise happy-path user journey.
-  
-  ## Technical Contracts
-  - **Functional Core (src/core/)**:
-    - Input parameters: [type, name]
-    - Output values: [type, name]
-    - Business invariants: [e.g., balance cannot be negative]
-  - **Imperative Shell (src/shell/)**:
-    - Database migrations/queries: [SQL/Schema details]
-    - API routers: [Endpoint paths, method, payload specs]
-  
-  ## Test Criteria
-  - **Unit Tests**: [Target assertions and preconditions]
-  - **E2E Integration**: [Browser Playwright interaction goals]
-  ```
+### Step 2: Fetch Existing GitHub Backlog via MCP
+- Use `github` MCP server to list all existing issues in the repository.
+- Read each issue's hidden `prd-sync` marker to recover its `key` and stored `src-sha`.
 
-### Step 6: Synchronize to GitHub Issues (`gh issue create`)
-- For each generated spec file `docs/specs/issue-*.md`:
-  - Run the `gh` command to create the corresponding issue on GitHub using the specification content:
-    ```bash
-    gh issue create --title "[Issue Title]" --body-file "docs/specs/issue-XX.md"
-    ```
-  - Parse the output URL to extract the newly assigned GitHub Issue number (e.g., `#123`).
-  - Edit the local `docs/specs/issue-XX.md` file, replacing the placeholder `- Issue ID: #xxx` with the real assigned GitHub Issue number `- Issue ID: #123`.
+### Step 3: Draft & Reconcile Backlog
+Reconcile each PRD story against existing GitHub issues keyed on `key`:
+- **New Story**: No issue with `key` exists -> Queue creation using `STORY.template.md`, stamp `prd-sync` marker with current `src-sha`, apply `status:draft` label and derived priority label (`must-have`, `should-have`, etc.).
+- **Changed Story**: Issue with `key` exists but stored `src-sha` != current `src-sha` -> Queue update (refresh body using `STORY.template.md`, update `src-sha` in marker, refresh priority label).
+- **Unchanged Story**: Issue with `key` exists and stored `src-sha` matches -> Skip (0 API writes).
+- **Removed Story**: Issue with `key` exists on GitHub but is no longer present in `docs/PRD.md` -> Leave issue intact on GitHub, flag warning to PO.
 
+### Step 4: Execute GitHub Writes via MCP Server
+- Execute `github` MCP server tool calls to create new issues and update changed issues.
+- Apply GitHub metadata labels for priority and `status:draft`.
 
----
+### Step 5: Present Summary Report to PO
+- Display a clean summary breakdown:
+  - Created Issues (count & URLs)
+  - Updated Issues (count & URLs)
+  - Skipped Unchanged Issues (count)
+  - Removed Story Warnings (if any)
 
-## 5. Edge Case Handling
-
-- **Epic/Requirement is Too Large**:
-  - *Action*: If a single requirement requires modifications across multiple layers (e.g., user registration, email validation, and SMS auth), the skill must slice the issue into smaller, sequential specifications (e.g., `issue-01: registration core`, `issue-02: email wrapper`).
-- **Cyclic Dependency Identified**:
-  - *Action*: If two issues depend on each other, halt the backlog generation. Refactor the interface contracts and separate them into shared core helper functions, resolving the loop before writing files.
-- **Implicit Rules with No Traceability**:
-  - *Action*: If the PRD contains an implicit feature that does not have an explicit `[Rn]` tag, generate a default Traceability ID `[R-impl-xxx]` to maintain 100% auditable records.
+## 8. Guardrails & Verification Checklist
+Before exiting, verify:
+- [ ] Fetched existing GitHub issues first and parsed `prd-sync` markers to prevent duplicates.
+- [ ] Parsed story keys tolerantly (`US1` / `[US1]`) and reconciled on normalized `key`.
+- [ ] Comparing `src-sha` prevented unnecessary API writes for unchanged stories.
+- [ ] Stamped `prd-sync` marker (`key` + `src-sha`) into every created/updated issue body.
+- [ ] Applied `status:draft` and priority labels as real GitHub issue label metadata via MCP server.
+- [ ] Handled removed stories by leaving them intact and flagging to PO.
+- [ ] Formatted every issue using `templates/STORY.template.md` with explicit `docs/PRD.md#us<n>` links.
+- [ ] **ZERO** code or `SPEC.md` files were created or modified during execution.

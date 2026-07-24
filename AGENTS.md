@@ -23,13 +23,13 @@ Every modification, specification, and execution must trace directly back to PRD
 
 ### **2.1 Model Cascading Routing Table**
 We utilize Gemini models and cascading principles to minimize costs while maintaining extreme production quality. Always reference the official [Google AI Latest Gemini Models Documentation](https://ai.google.dev/gemini-api/docs/latest-model) for up-to-date model capabilities and selection:
-- **Gemini 3.5 Flash-Lite**: Default high-throughput model for routine formatting, lint error cleaning, log trimming, spec checks, and test-suite parsing.
-- **Gemini 3.6 Flash**: Model for deep reasoning and complex coding tasks, reserved for architectural drafting, TDD cycle debugging, complex refactoring, and initial interactive interviews.
+- **Gemini 3.5 Flash-Lite**: Default high-throughput model for routine tasks (`/audit-prd`, `/prd2backlog`, `/review-spec`, `/ship`), formatting, lint error cleaning, log trimming, spec checks, and test-suite parsing.
+- **Gemini 3.6 Flash**: Model for deep reasoning and complex coding tasks (`/interview-prd`, `/arch-gate`, `/specify`, `/tdd-build`, `/e2e-test`), architectural drafting, TDD cycle debugging, complex refactoring, and interactive interviews.
 
 ### **2.2 Stateless Sub-Agent Cycles**
 To prevent context rot, background agents must clear their history at each test/fix cycle. The active sub-agent context window is strictly constrained to:
 1. `docs/architecture.md` (System contracts)
-2. `docs/specs/issue-*.md` (The atomic spec)
+2. `SPEC.md` (The active behavioral contract; archived copies in `docs/specs/`)
 3. Modified source files and direct test output.
 
 ### **2.3 Log Trimming & Diff Patching**
@@ -52,13 +52,13 @@ To prevent context rot, background agents must clear their history at each test/
 ---
 
 ## **5. GitHub Synchronization & Project Management**
-To ensure full synchronization with GitHub for Project Management, we enforce a strict integration using standard Git CLI and GitHub (`gh`) CLI:
-- **Repository Setup (`init-project`)**: Must check if `gh` is installed, verify auth status, and interactively prompt to create a public/private GitHub repository if no 'origin' remote exists.
-- **Issues Management (`/prd2backlog`)**: All backlog items generated as local markdown files (`docs/specs/issue-*.md`) must automatically be created as GitHub Issues via `gh issue create`. The assigned GitHub Issue ID (e.g., `#123`) must be dynamically parsed and written back to the local spec's metadata.
-- **Specification Updates (`/specify`)**: Any subsequent refinements made to local spec files must keep GitHub updated by executing `gh issue edit <number> --body-file <spec-file>`.
-- **Branch Management**: For every new feature/issue development, the agent must create and switch to a branch linked to the GitHub issue via `gh issue checkout <number>`.
-- **Git Commit Standards**: All staging (`git add`) and commits (`git commit`) must utilize standard Git CLI to strictly enforce the rule-traceability commit format: `type(scope): summary [Rn] (#issue_id)`.
-- **Merge & Pull Requests (`/ship`)**: Merges into the main branch must be conducted by creating a Pull Request via `gh pr create --fill` and completed with Squash and Merge (`gh pr merge --squash --delete-branch`) to maintain a clean, traceable main commit history.
-- **Sequential Execution Policy**: The automated background development loop (`/goal`) must execute strictly sequentially—one user story (issue specification) at a time—and never in parallel. This ensures that every completed feature becomes the stable baseline for the next user story, preventing overlapping file edits, branch divergences, and logical conflicts.
+To ensure full synchronization with GitHub for Project Management, we enforce a strict integration using standard Git CLI, GitHub (`gh`) CLI, and the `github` MCP server:
+- **Repository Setup (`init-project`)**: Checks if `gh` is installed, verifies auth status, and interactively prompts to create a public/private GitHub repository if no 'origin' remote exists.
+- **Backlog Generation (`/prd2backlog`)**: All backlog items extracted from sealed `docs/PRD.md` are automatically created or reconciled as GitHub Issues via the `github` MCP server (or `gh issue create`). The assigned GitHub Issue ID (e.g., `#123`) is dynamically parsed and saved to metadata.
+- **Autonomous Specification Drafting (`/specify`)**: Pulls user story criteria from GitHub via the `github` MCP server, drafts `SPEC.md` at repository root, validates automatically via `/review-spec` sub-agent audit (zero HITL pauses), creates `issue/<number>-<title>` branch, commits `SPEC.md`, transitions GitHub issue state to `in-progress`, and hands off to `/tdd-build`.
+- **Branch & Commit Standards**: All staging (`git add`) and commits (`git commit`) utilize standard Git CLI to strictly enforce the rule-traceability format: `type(scope): summary [Rn] (#issue_id)`.
+- **Merge & Pull Requests (`/ship`)**: Merges into `main` are conducted via `gh pr create --fill` and completed with Squash and Merge (`gh pr merge --squash --delete-branch`) to maintain clean main commit history.
+- **Sequential Execution Policy**: The automated background development loop (`/goal`) executes strictly sequentially—one user story at a time—guaranteeing stable baselines.
+
 
 

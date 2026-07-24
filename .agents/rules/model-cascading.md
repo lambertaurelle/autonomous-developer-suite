@@ -38,7 +38,7 @@ Agents must avoid carrying full conversation histories into subsequent steps.
 *   **Action**: Before triggering `/tdd-build` or `/e2e-test`, the environment context must be purged.
 *   **Supplied Variables**: Only pass the following three components:
     1.  The immutable `docs/architecture.md`.
-    2.  The current task spec `docs/specs/issue-X.md`.
+    2.  The active behavioral specification contract `SPEC.md` (or archived `docs/specs/issue-X.md`).
     3.  The exact target source file and corresponding test file.
 
 ### **3.2 Log Trimming and Filtering**

@@ -40,7 +40,7 @@ sequenceDiagram
 At each attempt step, the system must adhere to the following sequence:
 
 ### **Attempt 1 (Initial Draft)**
-*   The agent consumes the specification `docs/specs/issue-X.md`, type definitions, and original code.
+*   The agent consumes the active specification contract `SPEC.md` (or archived `docs/specs/issue-X.md`), type definitions, and original code.
 *   Writes/modifies the target file.
 *   Runs the local test runner. If clean, proceed to ship. If failed, proceed to Attempt 2.
 
@@ -66,10 +66,10 @@ At each attempt step, the system must adhere to the following sequence:
 If the test suite or lint checker continues to throw a non-zero exit code after the 5th attempt, the circuit breaker is **tripped**. The following actions are automatically executed:
 
 1.  **Halt Execution Loop**: The autonomous orchestrator suspends all subsequent commands in the `/goal` workflow.
-2.  **Generate Diagnostic Report (`crash-report.md`)**: The orchestrator writes a structured summary to the scratch directory `/home/user/.gemini/antigravity-cli/brain/<conversation-id>/scratch/crash-report.md` details:
+2.  **Generate Diagnostic Report (`circuit_breaker_state.log`)**: The orchestrator writes a structured state snapshot dump to `.agents/circuit_breaker_state.log` detailing:
     *   The target issue being processed.
     *   The exact file(s) modified.
     *   The exact failing tests and linter outputs.
     *   The list of attempts and modifications made.
-3.  **Rollback / Secure Workspace**: To prevent corrupting the branch, the orchestrator shelves or stashes the broken changes, returning the workspace to a clean, stable state.
-4.  **Raise Human Takeover Alert**: A zero-token interrupt is fired, printing a clear message and requesting human intervention to resolve the impasse.
+3.  **Rollback / Secure Workspace**: To prevent corrupting the branch, the orchestrator shelves or stashes the broken changes into emergency branch `drift/circuit-breaker-<timestamp>`, returning the main workspace to a clean, stable state.
+4.  **Raise Human Takeover Alert**: A zero-token interrupt is fired by `scripts/hooks/on-circuit-breaker.sh`, printing a clear message and requesting human intervention to resolve the impasse.

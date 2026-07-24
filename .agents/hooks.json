@@ -1,82 +1,56 @@
 {
-  "version": "1.0.0",
-  "hooks": [
-    {
-      "name": "PreCommit",
-      "trigger": "pre-commit",
-      "description": "Deterministic validation running before commits are finalized, checking commit message formatting, linting rules, tests, coverage floor, and security scans.",
-      "commands": [
-        {
-          "name": "Check Commit Message Format",
-          "command": "git log -1 --pretty=%B | grep -E '^(feat|fix|docs|style|refactor|test|chore)\\([a-zA-Z0-9_\\-]+\\):\\s.+\\[R[0-9]+(\\.[0-9]+)*(\\s*,\\s*R[0-9]+(\\.[0-9]+)*)*\\]\\s+\\(#[0-9]+\\)$'",
-          "errorMessage": "Commit message does not match the mandatory traceability convention. Expected format: type(scope): summary [Rn] (#issue_id)"
-        },
-        {
-          "name": "Lint Check",
-          "command": "npm run lint || pylint src/",
-          "errorMessage": "Linter failed. Zero formatting or syntactic errors are permitted in production-grade code."
-        },
-        {
-          "name": "Unit Tests & Coverage",
-          "command": "npm run test:coverage || pytest --cov=src --cov-fail-under=90 tests/",
-          "errorMessage": "Unit tests failed or overall statement/branch coverage is below the required 90% threshold."
-        },
-        {
-          "name": "Security Vulnerability Scan",
-          "command": "trivy fs --exit-code 1 --severity HIGH,CRITICAL .",
-          "errorMessage": "Trivy security engine detected HIGH or CRITICAL severity vulnerabilities in dependency trees or local workspace."
-        }
-      ]
-    },
-    {
-      "name": "PreToolUse",
-      "trigger": "pre-tool-use",
-      "description": "Interprets tool usage permissions and blocks destructive actions or modifications to sealed files.",
-      "commands": [
-        {
-          "name": "Block Destructive DB Commands",
-          "command": "echo \"$TOOL_ARGUMENTS\" | grep -Ei 'drop\\s+database|drop\\s+table|delete\\s+from\\s+users' && exit 1 || exit 0",
-          "errorMessage": "Tool execution blocked: Sandboxed write credentials prohibit executing high-risk mutations (DROP, DELETE, TRUNCATE)."
-        }
-      ]
-    },
-    {
-      "name": "OnInterrupt",
-      "trigger": "on_interrupt",
-      "description": "Triggered when active execution is interrupted by environment anomalies or critical configuration voids.",
-      "actions": [
-        {
-          "condition": "env_missing_secret",
-          "action": "pause_and_notify_human",
-          "message": "EXECUTION PAUSED: A critical API key, secret, or environment variable is missing. Halting execution loop for manual override."
-        }
-      ]
-    },
-    {
-      "name": "OnCircuitBreaker",
-      "trigger": "on_circuit_breaker",
-      "description": "Triggered when iterative code repairs or unit testing loops reach the hard limit of 5 failed attempts.",
-      "actions": [
-        {
-          "condition": "attempts_exceed_limit",
-          "limit": 5,
-          "action": "trigger_takeover_report",
-          "script": "bash scripts/generate-crash-report.sh",
-          "message": "CIRCUIT BREAKER TRIPPED: Automated repair failed to resolve issues in 5 attempts. Restoring stable branch and triggering manual takeover."
-        }
-      ]
-    },
-    {
-      "name": "OnArchitectureDrift",
-      "trigger": "on_architecture_drift",
-      "description": "Triggers alert or block when proposed changes modify contracts inside docs/architecture.md without authorization.",
-      "actions": [
-        {
-          "condition": "modifies_docs_architecture",
-          "action": "block_and_alert_architect",
-          "message": "CRITICAL DRIFT DETECTED: Directly modifying docs/architecture.md is prohibited outside the formal architectural arbitration. Please run /arch-gate."
-        }
-      ]
-    }
-  ]
+  "version": "3.0",
+  "description": "Antigravity Deterministic Zero-Token Hooks Configuration",
+  "hooks": {
+    "PreCommit": [
+      {
+        "name": "pre-commit-lint",
+        "description": "Enforce strict syntactic/styling linter standards and commit message traceability",
+        "command": "scripts/hooks/pre-commit-lint.sh"
+      },
+      {
+        "name": "pre-commit-test",
+        "description": "Deterministic unit testing execution with log trimming",
+        "command": "scripts/hooks/pre-commit-test.sh"
+      },
+      {
+        "name": "pre-commit-coverage",
+        "description": "Verify code coverage remains strictly at or above 90%",
+        "command": "scripts/hooks/pre-commit-coverage.sh"
+      },
+      {
+        "name": "pre-commit-security",
+        "description": "Run Trivy container and filesystem scan + secrets detection",
+        "command": "scripts/hooks/pre-commit-security.sh"
+      }
+    ],
+    "OnInterrupt": [
+      {
+        "name": "on-interrupt-handler",
+        "description": "Intercept missing secrets or environment settings",
+        "command": "scripts/hooks/on-interrupt.sh"
+      }
+    ],
+    "OnCircuitBreaker": [
+      {
+        "name": "circuit-breaker-handler",
+        "description": "Coordinate human takeover on 5-attempt loop lockout",
+        "command": "scripts/hooks/on-circuit-breaker.sh"
+      }
+    ],
+    "OnArchitectureDrift": [
+      {
+        "name": "architecture-drift-protection",
+        "description": "Defend the sealed architecture against undocumented modifications",
+        "command": "scripts/hooks/on-architecture-drift.sh"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "name": "block-destructive-db-commands",
+        "description": "Interprets tool usage permissions and blocks destructive actions or modifications to sealed files",
+        "command": "echo \"$TOOL_ARGUMENTS\" | grep -Ei 'drop\\s+database|drop\\s+table|delete\\s+from\\s+users' && exit 1 || exit 0"
+      }
+    ]
+  }
 }
