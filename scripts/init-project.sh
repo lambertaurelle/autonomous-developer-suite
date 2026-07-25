@@ -238,24 +238,25 @@ REPO_NAME="${REPO_NAME%.git}"
 
 log_info "[TRACE] Target Owner: '$REPO_OWNER' | Repo Name: '$REPO_NAME' | Slug: '${REPO_SLUG:-N/A}'"
 
+PROJECT_NAME="autonomous-dev-board"
 STATUS_OPTIONS="Backlog,Ready,Spec Reviewed,In Progress,In Review,Done"
 
-log_info "[TRACE] Searching existing GitHub Projects for owner '$REPO_OWNER'..."
+log_info "[TRACE] Searching existing GitHub Projects for '$PROJECT_NAME' under owner '$REPO_OWNER'..."
 PROJECTS_LIST_OUTPUT="$(gh project list --owner "$REPO_OWNER" --format json 2>&1 || true)"
 log_info "[TRACE] gh project list output:\n$PROJECTS_LIST_OUTPUT"
 
-PROJECT_NUM="$(json_extract_project_number "$PROJECTS_LIST_OUTPUT" "$REPO_NAME")"
-log_info "[TRACE] Found Project Number: '${PROJECT_NUM:-NONE}'"
+PROJECT_NUM="$(json_extract_project_number "$PROJECTS_LIST_OUTPUT" "$PROJECT_NAME")"
+log_info "[TRACE] Found Project Number for '$PROJECT_NAME': '${PROJECT_NUM:-NONE}'"
 
 if [ -z "$PROJECT_NUM" ] || [ "$PROJECT_NUM" = "null" ]; then
-    log_info "Creating GitHub Project V2 board: '$REPO_NAME Board'..."
-    CREATE_OUTPUT="$(gh project create --owner "$REPO_OWNER" --title "$REPO_NAME Board" --format json 2>&1 || true)"
+    log_info "Creating GitHub Project V2 board: '$PROJECT_NAME'..."
+    CREATE_OUTPUT="$(gh project create --owner "$REPO_OWNER" --title "$PROJECT_NAME" --format json 2>&1 || true)"
     log_info "[TRACE] gh project create output:\n$CREATE_OUTPUT"
     PROJECT_NUM="$(json_extract_number "$CREATE_OUTPUT")"
 fi
 
 if [ -n "$PROJECT_NUM" ] && [ "$PROJECT_NUM" != "null" ]; then
-    log_success "GitHub Project Board #$PROJECT_NUM active."
+    log_success "GitHub Project Board '$PROJECT_NAME' (#$PROJECT_NUM) active."
     if [ -n "${REPO_SLUG:-}" ]; then
         log_info "[TRACE] Linking Project #$PROJECT_NUM to repository '$REPO_SLUG'..."
         LINK_OUTPUT="$(gh project link "$PROJECT_NUM" --owner "$REPO_OWNER" --repo "$REPO_NAME" 2>&1 || true)"
