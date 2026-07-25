@@ -164,9 +164,51 @@ fi
 # ==============================================================================
 log_info "Verifying GitHub Project Board & Status Stage Transitions..."
 
+# JSON Parsing Helper Functions
+json_extract_project_number() {
+    local json="$1"
+    local title="$2"
+    if command -v jq &>/dev/null; then
+        echo "$json" | jq -r ".projects[]? | select(.title | contains(\"$title\")) | .number" 2>/dev/null | head -n 1
+    elif command -v python3 &>/dev/null; then
+        python3 -c "import sys, json; data=json.load(sys.stdin); print(next((str(p['number']) for p in data.get('projects',[]) if '$title' in p.get('title','')), ''))" <<< "$json" 2>/dev/null
+    elif command -v python &>/dev/null; then
+        python -c "import sys, json; data=json.load(sys.stdin); print(next((str(p['number']) for p in data.get('projects',[]) if '$title' in p.get('title','')), ''))" <<< "$json" 2>/dev/null
+    else
+        echo "$json" | grep -o '"number":[0-9]*' | head -n 1 | cut -d':' -f2
+    fi
+}
+
+json_extract_number() {
+    local json="$1"
+    if command -v jq &>/dev/null; then
+        echo "$json" | jq -r '.number // empty' 2>/dev/null
+    elif command -v python3 &>/dev/null; then
+        python3 -c "import sys, json; data=json.load(sys.stdin); print(str(data.get('number','')))" <<< "$json" 2>/dev/null
+    elif command -v python &>/dev/null; then
+        python -c "import sys, json; data=json.load(sys.stdin); print(str(data.get('number','')))" <<< "$json" 2>/dev/null
+    else
+        echo "$json" | grep -o '"number":[0-9]*' | head -n 1 | cut -d':' -f2
+    fi
+}
+
+json_extract_status_field_id() {
+    local json="$1"
+    if command -v jq &>/dev/null; then
+        echo "$json" | jq -r '.fields[]? | select(.name == "Status") | .id' 2>/dev/null
+    elif command -v python3 &>/dev/null; then
+        python3 -c "import sys, json; data=json.load(sys.stdin); print(next((f['id'] for f in data.get('fields',[]) if f.get('name')=='Status'), ''))" <<< "$json" 2>/dev/null
+    elif command -v python &>/dev/null; then
+        python -c "import sys, json; data=json.load(sys.stdin); print(next((f['id'] for f in data.get('fields',[]) if f.get('name')=='Status'), ''))" <<< "$json" 2>/dev/null
+    else
+        echo "$json" | grep -o '"id":"PVT[A-Za-z0-9_]*"' | head -n 1 | cut -d'"' -f4
+    fi
+}
+
 REMOTE_URL="$(git remote get-url origin 2>/dev/null || true)"
 REPO_OWNER=""
 REPO_NAME=""
+REPO_SLUG=""
 
 if [ -n "$REMOTE_URL" ]; then
     REPO_SLUG="$(echo "$REMOTE_URL" | sed -E 's/.*[:\/]([^\/]+\/[^\/]+?)(\.git)?$/\1/')"
@@ -181,64 +223,75 @@ if [ -z "$REPO_OWNER" ]; then
 fi
 REPO_NAME="${REPO_NAME%.git}"
 
+log_info "[TRACE] Target Owner: '$REPO_OWNER' | Repo Name: '$REPO_NAME' | Slug: '${REPO_SLUG:-N/A}'"
+
 STATUS_OPTIONS="Backlog,Ready,Spec Reviewed,In Progress,In Review,Done"
 
-if gh project list --owner "$REPO_OWNER" &>/dev/null || gh project list --owner "@me" &>/dev/null; then
-    log_info "Checking for existing GitHub Project for '$REPO_NAME'..."
-    PROJECT_NUM="$(gh project list --owner "$REPO_OWNER" --format json --jq ".projects[] | select(.title | contains(\"$REPO_NAME\")) | .number" 2>/dev/null | head -n 1 || true)"
+log_info "[TRACE] Searching existing GitHub Projects for owner '$REPO_OWNER'..."
+PROJECTS_LIST_OUTPUT="$(gh project list --owner "$REPO_OWNER" --format json 2>&1 || true)"
+log_info "[TRACE] gh project list output:\n$PROJECTS_LIST_OUTPUT"
 
-    if [ -z "$PROJECT_NUM" ]; then
-        log_info "Creating GitHub Project V2 board: '$REPO_NAME Board'..."
-        PROJECT_NUM="$(gh project create --owner "$REPO_OWNER" --title "$REPO_NAME Board" --format json --jq '.number' 2>/dev/null || true)"
+PROJECT_NUM="$(json_extract_project_number "$PROJECTS_LIST_OUTPUT" "$REPO_NAME")"
+log_info "[TRACE] Found Project Number: '${PROJECT_NUM:-NONE}'"
+
+if [ -z "$PROJECT_NUM" ] || [ "$PROJECT_NUM" = "null" ]; then
+    log_info "Creating GitHub Project V2 board: '$REPO_NAME Board'..."
+    CREATE_OUTPUT="$(gh project create --owner "$REPO_OWNER" --title "$REPO_NAME Board" --format json 2>&1 || true)"
+    log_info "[TRACE] gh project create output:\n$CREATE_OUTPUT"
+    PROJECT_NUM="$(json_extract_number "$CREATE_OUTPUT")"
+fi
+
+if [ -n "$PROJECT_NUM" ] && [ "$PROJECT_NUM" != "null" ]; then
+    log_success "GitHub Project Board #$PROJECT_NUM active."
+    if [ -n "${REPO_SLUG:-}" ]; then
+        log_info "[TRACE] Linking Project #$PROJECT_NUM to repository '$REPO_SLUG'..."
+        LINK_OUTPUT="$(gh project link "$PROJECT_NUM" --owner "$REPO_OWNER" --repo "$REPO_NAME" 2>&1 || true)"
+        log_info "[TRACE] gh project link output: $LINK_OUTPUT"
     fi
 
-    if [ -n "$PROJECT_NUM" ]; then
-        log_success "GitHub Project Board #$PROJECT_NUM active."
-        if [ -n "${REPO_SLUG:-}" ]; then
-            gh project link "$PROJECT_NUM" --owner "$REPO_OWNER" --repo "$REPO_NAME" &>/dev/null || true
-            log_success "Linked Project #$PROJECT_NUM to repository $REPO_SLUG."
-        fi
+    log_info "[TRACE] Fetching fields for Project #$PROJECT_NUM..."
+    FIELDS_OUTPUT="$(gh project field-list "$PROJECT_NUM" --owner "$REPO_OWNER" --format json 2>&1 || true)"
+    log_info "[TRACE] gh project field-list output:\n$FIELDS_OUTPUT"
 
-        # Locate Status field ID
-        STATUS_FIELD_ID="$(gh project field-list "$PROJECT_NUM" --owner "$REPO_OWNER" --format json --jq '.fields[] | select(.name == "Status") | .id' 2>/dev/null || true)"
+    STATUS_FIELD_ID="$(json_extract_status_field_id "$FIELDS_OUTPUT")"
+    log_info "[TRACE] Target Status Field ID: '${STATUS_FIELD_ID:-NONE}'"
 
-        if [ -n "$STATUS_FIELD_ID" ]; then
-            log_info "Updating 'Status' field options to ($STATUS_OPTIONS)..."
-            
-            MUTATION='mutation($fieldId: ID!) {
-              updateProjectV2SingleSelectField(input: {
-                fieldId: $fieldId,
-                options: [
-                  { name: "Backlog", color: GRAY, description: "Item in backlog" },
-                  { name: "Ready", color: BLUE, description: "Specification drafted and ready for review" },
-                  { name: "Spec Reviewed", color: YELLOW, description: "Specification approved" },
-                  { name: "In Progress", color: PURPLE, description: "Actively being coded/tested" },
-                  { name: "In Review", color: ORANGE, description: "E2E testing passed, pending PR merge" },
-                  { name: "Done", color: GREEN, description: "Merged and closed" }
-                ]
-              }) {
-                projectV2SingleSelectField { id name }
-              }
-            }'
+    if [ -n "$STATUS_FIELD_ID" ] && [ "$STATUS_FIELD_ID" != "null" ]; then
+        log_info "Updating 'Status' field options to ($STATUS_OPTIONS)..."
+        
+        MUTATION='mutation($fieldId: ID!) {
+          updateProjectV2SingleSelectField(input: {
+            fieldId: $fieldId,
+            options: [
+              { name: "Backlog", color: GRAY, description: "Item in backlog" },
+              { name: "Ready", color: BLUE, description: "Specification drafted and ready for review" },
+              { name: "Spec Reviewed", color: YELLOW, description: "Specification approved" },
+              { name: "In Progress", color: PURPLE, description: "Actively being coded/tested" },
+              { name: "In Review", color: ORANGE, description: "E2E testing passed, pending PR merge" },
+              { name: "Done", color: GREEN, description: "Merged and closed" }
+            ]
+          }) {
+            projectV2SingleSelectField { id name }
+          }
+        }'
 
-            if gh api graphql -f query="$MUTATION" -f fieldId="$STATUS_FIELD_ID" &>/dev/null; then
-                log_success "Successfully configured GitHub Project 'Status' field options."
-            else
-                log_warn "Could not update default 'Status' field options via GraphQL API. Creating single-select field 'Lifecycle Status'..."
-                gh project field-create "$PROJECT_NUM" --owner "$REPO_OWNER" --name "Lifecycle Status" --data-type "SINGLE_SELECT" --single-select-options "$STATUS_OPTIONS" &>/dev/null || true
-            fi
+        GRAPHQL_OUTPUT="$(gh api graphql -f query="$MUTATION" -f fieldId="$STATUS_FIELD_ID" 2>&1 || true)"
+        log_info "[TRACE] gh api graphql output:\n$GRAPHQL_OUTPUT"
+
+        if echo "$GRAPHQL_OUTPUT" | grep -q "projectV2SingleSelectField"; then
+            log_success "Successfully configured GitHub Project 'Status' field options."
         else
-            log_info "Creating 'Status' field with lifecycle stages ($STATUS_OPTIONS)..."
-            gh project field-create "$PROJECT_NUM" --owner "$REPO_OWNER" --name "Status" --data-type "SINGLE_SELECT" --single-select-options "$STATUS_OPTIONS" &>/dev/null || true
-            log_success "Created 'Status' field with stage transitions."
+            log_warn "GraphQL mutation failed. Attempting fallback field creation..."
+            FALLBACK_OUTPUT="$(gh project field-create "$PROJECT_NUM" --owner "$REPO_OWNER" --name "Lifecycle Status" --data-type "SINGLE_SELECT" --single-select-options "$STATUS_OPTIONS" 2>&1 || true)"
+            log_info "[TRACE] gh project field-create fallback output:\n$FALLBACK_OUTPUT"
         fi
     else
-        log_error "Failed to create or retrieve GitHub Project board for '$REPO_NAME'."
-        exit 1
+        log_info "Creating 'Status' field with lifecycle stages ($STATUS_OPTIONS)..."
+        FIELD_CREATE_OUTPUT="$(gh project field-create "$PROJECT_NUM" --owner "$REPO_OWNER" --name "Status" --data-type "SINGLE_SELECT" --single-select-options "$STATUS_OPTIONS" 2>&1 || true)"
+        log_info "[TRACE] gh project field-create output:\n$FIELD_CREATE_OUTPUT"
     fi
 else
-    log_error "GitHub CLI 'project' scope is not active or API is unauthenticated."
-    echo -e "${RED}[ABORTED]${NC} Please run '${CYAN}gh auth refresh -s project${NC}' to authenticate and re-run this script."
+    log_error "Failed to create or retrieve GitHub Project board for '$REPO_NAME'."
     exit 1
 fi
 
