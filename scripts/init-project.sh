@@ -145,6 +145,62 @@ else
 fi
 
 # ==============================================================================
+# GitHub Project Board (V2) & Status Field Initialization
+# ==============================================================================
+log_info "Verifying GitHub Project Board & Status Stage Transitions..."
+
+REMOTE_URL="$(git remote get-url origin 2>/dev/null || true)"
+REPO_OWNER=""
+REPO_NAME=""
+
+if [ -n "$REMOTE_URL" ]; then
+    REPO_SLUG="$(echo "$REMOTE_URL" | sed -E 's/.*[:\/]([^\/]+\/[^\/]+?)(\.git)?$/\1/')"
+    REPO_OWNER="$(echo "$REPO_SLUG" | cut -d'/' -f1)"
+    REPO_NAME="$(echo "$REPO_SLUG" | cut -d'/' -f2)"
+fi
+
+if [ -z "$REPO_OWNER" ]; then
+    REPO_OWNER="@me"
+    REPO_NAME="$(basename "$(pwd)")"
+fi
+
+STATUS_OPTIONS="Backlog,Ready,Spec Reviewed,In Progress,In Review,Done"
+
+if gh project list --owner "$REPO_OWNER" &>/dev/null || gh project list --owner "@me" &>/dev/null; then
+    log_info "Checking for existing GitHub Project for '$REPO_NAME'..."
+    PROJECT_NUM="$(gh project list --owner "$REPO_OWNER" --format json --jq ".projects[] | select(.title | contains(\"$REPO_NAME\")) | .number" 2>/dev/null | head -n 1 || true)"
+
+    if [ -z "$PROJECT_NUM" ]; then
+        log_info "Creating GitHub Project V2 board: '$REPO_NAME Board'..."
+        PROJECT_NUM="$(gh project create --owner "$REPO_OWNER" --title "$REPO_NAME Board" --format json --jq '.number' 2>/dev/null || true)"
+    fi
+
+    if [ -n "$PROJECT_NUM" ]; then
+        log_success "GitHub Project Board #$PROJECT_NUM active."
+        if [ -n "${REPO_SLUG:-}" ]; then
+            gh project link "$PROJECT_NUM" --owner "$REPO_OWNER" --repo "$REPO_NAME" &>/dev/null || true
+            log_success "Linked Project #$PROJECT_NUM to repository $REPO_SLUG."
+        fi
+
+        STATUS_FIELD_EXISTS="$(gh project field-list "$PROJECT_NUM" --owner "$REPO_OWNER" --format json --jq '.fields[] | select(.name == "Status") | .name' 2>/dev/null || true)"
+        if [ -z "$STATUS_FIELD_EXISTS" ]; then
+            log_info "Creating 'Status' field with lifecycle stages ($STATUS_OPTIONS)..."
+            gh project field-create "$PROJECT_NUM" --owner "$REPO_OWNER" --name "Status" --data-type "SINGLE_SELECT" --single-select-options "$STATUS_OPTIONS" &>/dev/null || true
+            log_success "Created 'Status' field with stage transitions."
+        else
+            log_success "GitHub Project 'Status' field verified."
+        fi
+    fi
+else
+    log_warn "GitHub CLI 'project' scope not active or API unauthenticated."
+    echo -e "${YELLOW}[RECOMMENDED]${NC} To enable automatic GitHub Project board status transitions, run:"
+    echo -e "  ${CYAN}gh auth refresh -s project${NC}"
+    echo -e "And ensure your GitHub Project board 'Status' field contains options:"
+    echo -e "  ${PURPLE}Backlog, Ready, Spec Reviewed, In Progress, In Review, Done${NC}"
+fi
+
+
+# ==============================================================================
 # Directory Tree Construction
 # ==============================================================================
 log_info "Creating autonomous developer directory tree..."
