@@ -257,11 +257,10 @@ fi
 
 if [ -n "$PROJECT_NUM" ] && [ "$PROJECT_NUM" != "null" ]; then
     log_success "GitHub Project Board '$PROJECT_NAME' (#$PROJECT_NUM) active."
-    if [ -n "${REPO_SLUG:-}" ]; then
-        log_info "[TRACE] Linking Project #$PROJECT_NUM to repository '$REPO_SLUG'..."
-        LINK_OUTPUT="$(gh project link "$PROJECT_NUM" --owner "$REPO_OWNER" --repo "$REPO_NAME" 2>&1 || true)"
-        log_info "[TRACE] gh project link output: $LINK_OUTPUT"
-    fi
+    
+    log_info "[TRACE] Linking Project #$PROJECT_NUM to repository..."
+    LINK_OUTPUT="$(gh project link "$PROJECT_NUM" --owner "$REPO_OWNER" --repo "$REPO_NAME" 2>&1 || gh project link "$PROJECT_NUM" --repo "${REPO_SLUG:-$REPO_NAME}" 2>&1 || gh project link "$PROJECT_NUM" 2>&1 || true)"
+    log_info "[TRACE] gh project link output:\n$LINK_OUTPUT"
 
     log_info "[TRACE] Fetching fields for Project #$PROJECT_NUM..."
     FIELDS_OUTPUT="$(gh project field-list "$PROJECT_NUM" --owner "$REPO_OWNER" --format json 2>&1 || true)"
@@ -280,21 +279,26 @@ if [ -n "$PROJECT_NUM" ] && [ "$PROJECT_NUM" != "null" ]; then
     fi
 
     # Synchronize existing open repository issues to the project board
-    if [ -n "${REPO_SLUG:-}" ]; then
-        log_info "Synchronizing existing open repository issues to Project Board #$PROJECT_NUM..."
+    log_info "Synchronizing existing open repository issues to Project Board #$PROJECT_NUM..."
+    EXISTING_ISSUES="$(gh issue list --state open --limit 100 --format json 2>/dev/null | json_extract_issue_urls 2>/dev/null || true)"
+    if [ -z "$EXISTING_ISSUES" ] && [ -n "${REPO_SLUG:-}" ]; then
         EXISTING_ISSUES="$(gh issue list --repo "$REPO_SLUG" --state open --limit 100 --format json 2>/dev/null | json_extract_issue_urls 2>/dev/null || true)"
-        if [ -z "$EXISTING_ISSUES" ]; then
-            EXISTING_ISSUES="$(gh issue list --repo "$REPO_SLUG" --state open --limit 100 --format json 2>/dev/null | grep -o '"url":"https://[^"]*"' | cut -d'"' -f4 || true)"
-        fi
-        if [ -n "$EXISTING_ISSUES" ]; then
-            for issue_url in $EXISTING_ISSUES; do
-                log_info "[TRACE] Linking issue to project: $issue_url"
-                gh project item-add "$PROJECT_NUM" --owner "$REPO_OWNER" --url "$issue_url" &>/dev/null || true
-            done
-            log_success "Synchronized existing open issues to Project Board #$PROJECT_NUM!"
-        else
-            log_info "No open repository issues to sync."
-        fi
+    fi
+    if [ -z "$EXISTING_ISSUES" ]; then
+        EXISTING_ISSUES="$(gh issue list --state open --limit 100 --format json 2>/dev/null | grep -o '"url":"https://[^"]*"' | cut -d'"' -f4 || true)"
+    fi
+
+    log_info "[TRACE] Discovered open issues to link:\n${EXISTING_ISSUES:-NONE}"
+
+    if [ -n "$EXISTING_ISSUES" ] && [ "$EXISTING_ISSUES" != "NONE" ]; then
+        for issue_url in $EXISTING_ISSUES; do
+            log_info "[TRACE] Adding issue to project: $issue_url"
+            ADD_OUTPUT="$(gh project item-add "$PROJECT_NUM" --owner "$REPO_OWNER" --url "$issue_url" 2>&1 || true)"
+            log_info "[TRACE] gh project item-add output:\n$ADD_OUTPUT"
+        done
+        log_success "Synchronized existing open issues to Project Board #$PROJECT_NUM!"
+    else
+        log_info "No open repository issues found to sync."
     fi
 else
     log_error "Failed to create or retrieve GitHub Project board for '$REPO_NAME'."
