@@ -107,6 +107,19 @@ The `/ship` skill handles the final stage of the autonomous development pipeline
   - Closed issue ID (`#n`)
   - Confirmation that `main` is pulled and up-to-date.
 
+## GitHub Issue Status Completion (`done`)
+
+When the feature PR is squash-merged and the issue branch is deleted:
+
+1. **Mark Status `done` and Close**:
+   - **GitHub MCP Server**: Call `update_issue(issue_number=<number>, status="done", state="closed")`.
+   - **CLI Fallback**:
+     ```bash
+     gh issue edit #<number> --add-label "done" --remove-label "in-review,in-progress"
+     gh issue close #<number> --reason "completed"
+     ```
+2. **Verify PR Link**: Ensure the PR body contains `Closes #<number>`.
+
 ---
 
 ## 5. Guardrails
@@ -115,6 +128,13 @@ The `/ship` skill handles the final stage of the autonomous development pipeline
 - **One Issue per Invocation**: `/ship` closes the specific issue owned by the current branch. It does not start the next story, branch, or spec.
 - **No Scope Widening**: `/ship` does not write code, fix bugs, or edit `SPEC.md`. If code or tests are missing, that is a `/tdd-build` step, not a ship step.
 - **Human Initiates**: `/ship` is never auto-triggered by `/commit` or `/tdd-build`; it is an explicit, deliberate invocation.
+
+## Strict GitHub Release Gate & Forbidden Fallbacks
+
+- **Mandatory Remote PR Lifecycle**: Shipping MUST execute strictly via remote GitHub PR creation (`gh pr create`), status check watching (`gh pr checks --watch`), and remote squash-merging (`gh pr merge --squash --delete-branch`).
+- **FORBIDDEN FALLBACK**: Local checkout and squash-merging (`git checkout main && git merge --squash`) as a fallback for GitHub API / authentication failures is **STRICTLY FORBIDDEN**.
+- **Auth & API Failures**: If `gh pr create` or `gh pr merge` fails due to `HTTP 401`, missing credentials, or API timeouts, **HALT IMMEDIATELY** and trigger circuit breaker takeover. Do NOT attempt a local merge to bypass GitHub.
+
 
 ---
 

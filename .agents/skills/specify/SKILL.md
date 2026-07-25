@@ -30,6 +30,15 @@ If you catch yourself listing or reading files beyond the three inputs above, st
 
 **Structure is mandatory, content is derived.** Conform to `SPEC.template.md`'s sections exactly (Overview, Domain model, Global constraints, Rules, Precedence order, Glossary) — this fixed shape is what makes specs reproducible and is **enforced by linter gates** (the gate denies a `SPEC.md` that is missing a canonical section). Every word of *content* must come from the Issue, not from a template placeholder or an example.
 
+## Pre-Flight Authentication & Issue Verification
+
+Before drafting `SPEC.md`, you MUST verify GitHub issue accessibility:
+
+- Execute `gh issue view #<number>` or query via the `github` MCP server.
+- **HTTP 401 / Auth Errors**: If `gh` returns an authentication error or `HTTP 401: Bad credentials`, **HALT IMMEDIATELY**. Do NOT fall back to local-only drafting or default issue numbers. Inform the user to run `gh auth login`.
+- **Missing Issue**: If the issue does not exist on GitHub, **HALT IMMEDIATELY**. Report that the story must be seeded via `/prd2backlog` first.
+
+
 ## Tools & Sub-Agents
 - **GitHub MCP server** (`github`) — used to fetch the issue and update its state/labels.
 - **`/review-spec` Sub-Agent** — adversarial quality gatekeeper that automatically validates drafted `SPEC.md` updates against `docs/PRD.md` and `docs/architecture.md`.
@@ -57,6 +66,21 @@ If you catch yourself listing or reading files beyond the three inputs above, st
      `feat(spec): add rules for issue #<number> [Rn] (#<number>)`
 8. **Mark Issue In-Progress**: Via the `github` MCP server, transition the GitHub issue state to `in-progress`.
 9. **Seamless Handoff**: Pass control directly to the autonomous coding loop (`/tdd-build`).
+
+## GitHub Issue Status Lifecycle
+
+For each user story issue `#<number>` being processed:
+
+1. **Intake (`in-progress`)**:
+   When `/specify` picks up issue `#<number>`, update its status state to `in-progress`:
+   - **GitHub MCP Server**: Call `update_issue(issue_number=<number>, status="in-progress")`.
+   - **CLI Fallback**: `gh issue edit #<number> --add-label "in-progress" --remove-label "ready,backlog"`
+
+2. **Handoff to Build/Review (`in-review`)**:
+   When `SPEC.md` passes review and hands off to `/tdd-build`, update status state to `in-review`:
+   - **GitHub MCP Server**: Call `update_issue(issue_number=<number>, status="in-review")`.
+   - **CLI Fallback**: `gh issue edit #<number> --add-label "in-review" --remove-label "in-progress"`
+
 
 ## Guardrails
 - **100% Autonomous**: Executes without pausing for human chat confirmation. Quality is enforced by `/review-spec`.

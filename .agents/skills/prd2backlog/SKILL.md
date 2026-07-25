@@ -82,6 +82,12 @@ Reconcile each PRD story against existing GitHub issues keyed on `key`:
   - Skipped Unchanged Issues (count)
   - Removed Story Warnings (if any)
 
+## Pre-Flight Gate
+
+- Execute `gh auth status` before attempting issue creation.
+- If `gh` is unauthenticated or returns `HTTP 401: Bad credentials`, **HALT IMMEDIATELY** and instruct the user to run `gh auth login`.
+
+
 ## 8. Guardrails & Verification Checklist
 Before exiting, verify:
 - [ ] Fetched existing GitHub issues first and parsed `prd-sync` markers to prevent duplicates.
