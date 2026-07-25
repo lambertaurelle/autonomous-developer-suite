@@ -106,10 +106,9 @@ The `/ship` skill handles the final stage of the autonomous development pipeline
   - Merged PR URL
   - Closed issue ID (`#n`)
   - Confirmation that `main` is pulled and up-to-date.
----
-## GitHub Project Status Transition
+## GitHub Project Stage Transition
 - **PR Creation**: Include `Closes #<number>` in the PR description (`gh pr create --body "Closes #<number>"`).
-- **On Merge**: Squash-merging into `main` automatically closes the issue and moves GitHub Project **Status** to **`Done`**.
+- **On Merge**: Squash-merging into `main` automatically closes the issue and moves GitHub Project **Stage** to **`Done`**.
 
 ---
 

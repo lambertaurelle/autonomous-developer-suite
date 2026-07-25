@@ -254,35 +254,16 @@ if [ -n "$PROJECT_NUM" ] && [ "$PROJECT_NUM" != "null" ]; then
     FIELDS_OUTPUT="$(gh project field-list "$PROJECT_NUM" --owner "$REPO_OWNER" --format json 2>&1 || true)"
     log_info "[TRACE] gh project field-list output:\n$FIELDS_OUTPUT"
 
-    STATUS_FIELD_ID="$(json_extract_field_id_by_name "$FIELDS_OUTPUT" "Status")"
-    LIFECYCLE_FIELD_ID="$(json_extract_field_id_by_name "$FIELDS_OUTPUT" "Lifecycle Status")"
+    STAGE_FIELD_ID="$(json_extract_field_id_by_name "$FIELDS_OUTPUT" "Stage")"
+    log_info "[TRACE] Target Stage Field ID: '${STAGE_FIELD_ID:-NONE}'"
 
-    log_info "[TRACE] Status Field ID: '${STATUS_FIELD_ID:-NONE}' | Lifecycle Status Field ID: '${LIFECYCLE_FIELD_ID:-NONE}'"
-
-    # Delete default Status field if present (contains default Todo, In Progress, Done)
-    if [ -n "$STATUS_FIELD_ID" ] && [ "$STATUS_FIELD_ID" != "null" ]; then
-        log_info "Deleting default GitHub Project 'Status' field (ID: $STATUS_FIELD_ID)..."
-        DELETE_OUTPUT="$(gh project field-delete --id "$STATUS_FIELD_ID" 2>&1 || true)"
-        log_info "[TRACE] gh project field-delete 'Status' output:\n$DELETE_OUTPUT"
-    fi
-
-    # Delete leftover Lifecycle Status field if present from previous runs
-    if [ -n "$LIFECYCLE_FIELD_ID" ] && [ "$LIFECYCLE_FIELD_ID" != "null" ]; then
-        log_info "Deleting existing 'Lifecycle Status' field (ID: $LIFECYCLE_FIELD_ID)..."
-        DELETE_LC_OUTPUT="$(gh project field-delete --id "$LIFECYCLE_FIELD_ID" 2>&1 || true)"
-        log_info "[TRACE] gh project field-delete 'Lifecycle Status' output:\n$DELETE_LC_OUTPUT"
-    fi
-
-    log_info "Creating 'Status' field with lifecycle stages ($STATUS_OPTIONS)..."
-    FIELD_CREATE_OUTPUT="$(gh project field-create "$PROJECT_NUM" --owner "$REPO_OWNER" --name "Status" --data-type "SINGLE_SELECT" --single-select-options "$STATUS_OPTIONS" 2>&1 || true)"
-    log_info "[TRACE] gh project field-create output:\n$FIELD_CREATE_OUTPUT"
-
-    if echo "$FIELD_CREATE_OUTPUT" | grep -i -q "error"; then
-        log_warn "Creating 'Status' field returned a warning. Creating fallback 'Lifecycle Status' field..."
-        FALLBACK_OUTPUT="$(gh project field-create "$PROJECT_NUM" --owner "$REPO_OWNER" --name "Lifecycle Status" --data-type "SINGLE_SELECT" --single-select-options "$STATUS_OPTIONS" 2>&1 || true)"
-        log_info "[TRACE] gh project field-create fallback output:\n$FALLBACK_OUTPUT"
+    if [ -z "$STAGE_FIELD_ID" ] || [ "$STAGE_FIELD_ID" = "null" ]; then
+        log_info "Creating custom GitHub Project 'Stage' field ($STATUS_OPTIONS)..."
+        FIELD_CREATE_OUTPUT="$(gh project field-create "$PROJECT_NUM" --owner "$REPO_OWNER" --name "Stage" --data-type "SINGLE_SELECT" --single-select-options "$STATUS_OPTIONS" 2>&1 || true)"
+        log_info "[TRACE] gh project field-create 'Stage' output:\n$FIELD_CREATE_OUTPUT"
+        log_success "Created GitHub Project 'Stage' field with stage transitions!"
     else
-        log_success "Successfully configured GitHub Project 'Status' field options!"
+        log_success "GitHub Project 'Stage' field verified active."
     fi
 else
     log_error "Failed to create or retrieve GitHub Project board for '$REPO_NAME'."

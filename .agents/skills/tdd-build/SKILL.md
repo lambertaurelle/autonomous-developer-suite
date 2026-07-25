@@ -38,8 +38,8 @@ To maximize execution reliability, minimize token consumption, and avoid context
 
 ---
 
-## GitHub Project Status Transition
-- **On Start**: When `/tdd-build` picks up an issue in `Spec Reviewed` and begins writing tests/code, update the GitHub Project **Status** to **`In Progress`**.
+## GitHub Project Stage Transition
+- **On Start**: When `/tdd-build` picks up an issue in `Spec Reviewed` and begins writing tests/code, update the GitHub Project **Stage** to **`In Progress`**.
 
 ---
 

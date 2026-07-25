@@ -36,8 +36,8 @@ By simulating realistic user sessions, filling out forms, testing button click s
 
 ---
 
-## GitHub Project Status Transition
-- **On E2E Pass**: When Playwright browser verification passes, update the GitHub Project **Status** to **`In Review`**.
+## GitHub Project Stage Transition
+- **On E2E Pass**: When Playwright browser verification passes, update the GitHub Project **Stage** to **`In Review`**.
 
 ---
 
