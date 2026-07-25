@@ -67,19 +67,8 @@ Before drafting `SPEC.md`, you MUST verify GitHub issue accessibility:
 8. **Mark Issue In-Progress**: Via the `github` MCP server, transition the GitHub issue state to `in-progress`.
 9. **Seamless Handoff**: Pass control directly to the autonomous coding loop (`/tdd-build`).
 
-## GitHub Issue Status Lifecycle
-
-For each user story issue `#<number>` being processed:
-
-1. **Intake (`in-progress`)**:
-   When `/specify` picks up issue `#<number>`, update its status state to `in-progress`:
-   - **GitHub MCP Server**: Call `update_issue(issue_number=<number>, status="in-progress")`.
-   - **CLI Fallback**: `gh issue edit #<number> --add-label "in-progress" --remove-label "ready,backlog"`
-
-2. **Handoff to Build/Review (`in-review`)**:
-   When `SPEC.md` passes review and hands off to `/tdd-build`, update status state to `in-review`:
-   - **GitHub MCP Server**: Call `update_issue(issue_number=<number>, status="in-review")`.
-   - **CLI Fallback**: `gh issue edit #<number> --add-label "in-review" --remove-label "in-progress"`
+## GitHub Project Status Transition
+- **Intake**: When `/specify` picks up an issue from `Backlog`, creates the issue branch, and drafts `SPEC.md`, update the GitHub Project **Status** to **`Ready`**.
 
 
 ## Guardrails

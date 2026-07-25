@@ -106,19 +106,10 @@ The `/ship` skill handles the final stage of the autonomous development pipeline
   - Merged PR URL
   - Closed issue ID (`#n`)
   - Confirmation that `main` is pulled and up-to-date.
-
-## GitHub Issue Status Completion (`done`)
-
-When the feature PR is squash-merged and the issue branch is deleted:
-
-1. **Mark Status `done` and Close**:
-   - **GitHub MCP Server**: Call `update_issue(issue_number=<number>, status="done", state="closed")`.
-   - **CLI Fallback**:
-     ```bash
-     gh issue edit #<number> --add-label "done" --remove-label "in-review,in-progress"
-     gh issue close #<number> --reason "completed"
-     ```
-2. **Verify PR Link**: Ensure the PR body contains `Closes #<number>`.
+---
+## GitHub Project Status Transition
+- **PR Creation**: Include `Closes #<number>` in the PR description (`gh pr create --body "Closes #<number>"`).
+- **On Merge**: Squash-merging into `main` automatically closes the issue and moves GitHub Project **Status** to **`Done`**.
 
 ---
 

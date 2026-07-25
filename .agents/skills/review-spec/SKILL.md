@@ -35,6 +35,10 @@ If the spec passes, `/review-spec` outputs `VERDICT: APPROVED`. If defects are f
   - Compliance Verdict: **`VERDICT: APPROVED`** or **`VERDICT: REJECTED`**.
   - Structured Audit Defect Report detailing exact rule violations, missing canonical sections, or scope creep.
 
+## GitHub Project Status Transition
+- **On `VERDICT: APPROVED`**: Update the GitHub Project **Status** to **`Spec Reviewed`**.
+
+
 ## 4. The 5-Check Specification Audit Matrix
 
 When invoked by `/specify`, `/review-spec` evaluates the proposed `SPEC.md` against 5 strict audit criteria:

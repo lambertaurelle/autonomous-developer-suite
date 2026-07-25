@@ -38,6 +38,11 @@ To maximize execution reliability, minimize token consumption, and avoid context
 
 ---
 
+## GitHub Project Status Transition
+- **On Start**: When `/tdd-build` picks up an issue in `Spec Reviewed` and begins writing tests/code, update the GitHub Project **Status** to **`In Progress`**.
+
+---
+
 ## 4. Preconditions & Harness Contract
 This skill depends on a declared set of harness files that every consuming project must provide:
 - `SPEC.md` (repo root) — the behavior contract.

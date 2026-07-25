@@ -27,15 +27,16 @@ Before initiating the autonomous cycle, the orchestrator MUST verify GitHub conn
 
 ```mermaid
 graph TD
-    A["Start /implementation-loop"] --> B["/specify (Fetch Issue & Draft SPEC.md)"]
-    B --> C["/review-spec (Adversarial Audit)"]
-    C -->|Fails Audit| B
-    C -->|VERDICT: APPROVED| D["/tdd-build (Red-Green-Refactor)"]
-    D -->|Circuit Breaker Tripped| E["Circuit Breaker Takeover"]
-    D -->|Tests Pass (>=90%)| F["/e2e-test (Playwright)"]
-    F -->|E2E Failure| D
-    F -->|E2E Passed| G["/ship (Pre-Commit Gates & Merge)"]
-    G --> H["GitHub PR Squash & Merge & Traceable Commit"]
+    A["Issue in Backlog"] --> B["/specify (Draft SPEC.md & Branch)"]
+    B -->|Status: Ready| C["/review-spec (Adversarial Audit)"]
+    C -->|Fails Audit (Max 5 Retries)| B
+    C -->|VERDICT: APPROVED<br/>(Status: Spec Reviewed)| D["/tdd-build (Red-Green-Refactor)"]
+    D -->|Status: In Progress| D
+    D -->|Unit Tests Pass >=90%| E["/e2e-test (Playwright)"]
+    E -->|E2E Failure| D
+    E -->|E2E Passed<br/>(Status: In Review)| F["/ship (Pre-Commit Gates & Merge)"]
+    F -->|PR Squash & Merge| G["Issue Closed<br/>(Status: Done)"]
+
 ```
 
 ## Context Reset Guidelines
