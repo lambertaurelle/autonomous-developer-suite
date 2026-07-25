@@ -280,12 +280,14 @@ if [ -n "$PROJECT_NUM" ] && [ "$PROJECT_NUM" != "null" ]; then
 
     # Synchronize existing open repository issues to the project board
     log_info "Synchronizing existing open repository issues to Project Board #$PROJECT_NUM..."
-    EXISTING_ISSUES="$(gh issue list --state open --limit 100 --format json 2>/dev/null | json_extract_issue_urls 2>/dev/null || true)"
+    ISSUES_OUTPUT="$(gh issue list --state open --limit 100 --json url 2>&1 || true)"
+    log_info "[TRACE] gh issue list output:\n$ISSUES_OUTPUT"
+
+    EXISTING_ISSUES="$(echo "$ISSUES_OUTPUT" | json_extract_issue_urls 2>/dev/null || true)"
     if [ -z "$EXISTING_ISSUES" ] && [ -n "${REPO_SLUG:-}" ]; then
-        EXISTING_ISSUES="$(gh issue list --repo "$REPO_SLUG" --state open --limit 100 --format json 2>/dev/null | json_extract_issue_urls 2>/dev/null || true)"
-    fi
-    if [ -z "$EXISTING_ISSUES" ]; then
-        EXISTING_ISSUES="$(gh issue list --state open --limit 100 --format json 2>/dev/null | grep -o '"url":"https://[^"]*"' | cut -d'"' -f4 || true)"
+        SLUG_OUTPUT="$(gh issue list --repo "$REPO_SLUG" --state open --limit 100 --json url 2>&1 || true)"
+        log_info "[TRACE] gh issue list --repo output:\n$SLUG_OUTPUT"
+        EXISTING_ISSUES="$(echo "$SLUG_OUTPUT" | json_extract_issue_urls 2>/dev/null || true)"
     fi
 
     log_info "[TRACE] Discovered open issues to link:\n${EXISTING_ISSUES:-NONE}"
