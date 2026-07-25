@@ -192,14 +192,15 @@ json_extract_number() {
     fi
 }
 
-json_extract_status_field_id() {
+json_extract_field_id_by_name() {
     local json="$1"
+    local field_name="$2"
     if command -v jq &>/dev/null; then
-        echo "$json" | jq -r '.fields[]? | select(.name == "Status") | .id' 2>/dev/null
+        echo "$json" | jq -r ".fields[]? | select(.name == \"$field_name\") | .id" 2>/dev/null
     elif command -v python3 &>/dev/null; then
-        python3 -c "import sys, json; data=json.load(sys.stdin); print(next((f['id'] for f in data.get('fields',[]) if f.get('name')=='Status'), ''))" <<< "$json" 2>/dev/null
+        python3 -c "import sys, json; data=json.load(sys.stdin); print(next((f['id'] for f in data.get('fields',[]) if f.get('name')=='$field_name'), ''))" <<< "$json" 2>/dev/null
     elif command -v python &>/dev/null; then
-        python -c "import sys, json; data=json.load(sys.stdin); print(next((f['id'] for f in data.get('fields',[]) if f.get('name')=='Status'), ''))" <<< "$json" 2>/dev/null
+        python -c "import sys, json; data=json.load(sys.stdin); print(next((f['id'] for f in data.get('fields',[]) if f.get('name')=='$field_name'), ''))" <<< "$json" 2>/dev/null
     else
         echo "$json" | grep -o '"id":"PVT[A-Za-z0-9_]*"' | head -n 1 | cut -d'"' -f4
     fi
@@ -253,14 +254,23 @@ if [ -n "$PROJECT_NUM" ] && [ "$PROJECT_NUM" != "null" ]; then
     FIELDS_OUTPUT="$(gh project field-list "$PROJECT_NUM" --owner "$REPO_OWNER" --format json 2>&1 || true)"
     log_info "[TRACE] gh project field-list output:\n$FIELDS_OUTPUT"
 
-    STATUS_FIELD_ID="$(json_extract_status_field_id "$FIELDS_OUTPUT")"
-    log_info "[TRACE] Default Status Field ID: '${STATUS_FIELD_ID:-NONE}'"
+    STATUS_FIELD_ID="$(json_extract_field_id_by_name "$FIELDS_OUTPUT" "Status")"
+    LIFECYCLE_FIELD_ID="$(json_extract_field_id_by_name "$FIELDS_OUTPUT" "Lifecycle Status")"
 
-    # Delete default Status field if present (which contains default Todo, In Progress, Done)
+    log_info "[TRACE] Status Field ID: '${STATUS_FIELD_ID:-NONE}' | Lifecycle Status Field ID: '${LIFECYCLE_FIELD_ID:-NONE}'"
+
+    # Delete default Status field if present (contains default Todo, In Progress, Done)
     if [ -n "$STATUS_FIELD_ID" ] && [ "$STATUS_FIELD_ID" != "null" ]; then
         log_info "Deleting default GitHub Project 'Status' field (ID: $STATUS_FIELD_ID)..."
         DELETE_OUTPUT="$(gh project field-delete --id "$STATUS_FIELD_ID" 2>&1 || true)"
-        log_info "[TRACE] gh project field-delete output:\n$DELETE_OUTPUT"
+        log_info "[TRACE] gh project field-delete 'Status' output:\n$DELETE_OUTPUT"
+    fi
+
+    # Delete leftover Lifecycle Status field if present from previous runs
+    if [ -n "$LIFECYCLE_FIELD_ID" ] && [ "$LIFECYCLE_FIELD_ID" != "null" ]; then
+        log_info "Deleting existing 'Lifecycle Status' field (ID: $LIFECYCLE_FIELD_ID)..."
+        DELETE_LC_OUTPUT="$(gh project field-delete --id "$LIFECYCLE_FIELD_ID" 2>&1 || true)"
+        log_info "[TRACE] gh project field-delete 'Lifecycle Status' output:\n$DELETE_LC_OUTPUT"
     fi
 
     log_info "Creating 'Status' field with lifecycle stages ($STATUS_OPTIONS)..."
