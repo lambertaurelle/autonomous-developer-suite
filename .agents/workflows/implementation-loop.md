@@ -1,5 +1,5 @@
 ---
-description: 
+description: Autonomous loop to sequentially specify, build, test, and ship PRD user stories.
 ---
 
 # Workflow: Autonomous Implementation Loop (/implementation-loop)

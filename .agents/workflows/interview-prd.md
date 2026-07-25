@@ -1,3 +1,7 @@
+---
+description: Interactive PRD interview, audit, architecture blueprint gate, and backlog generation pipeline.
+---
+
 # Workflow: Upstream Scoping & Architecture Gate Pipeline
 
 ## Sequence
