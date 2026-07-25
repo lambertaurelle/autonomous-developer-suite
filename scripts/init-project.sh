@@ -59,21 +59,36 @@ fi
 
 log_success "GitHub CLI (gh) is installed."
 
-# Verify GitHub CLI authentication status
-if ! gh auth status &> /dev/null; then
-    log_warn "You are not logged in to GitHub. Running 'gh auth login' is recommended."
-    echo -e "${YELLOW}[ACTION REQUIRED]${NC} Please run 'gh auth login' to authenticate with GitHub."
-    echo -e "Press Enter after you have successfully authenticated to continue, or Ctrl+C to abort."
-    read -r < /dev/tty
-    
-    # Re-verify authentication
+# Verify GitHub CLI authentication status and required token scope
+verify_gh_auth_and_scope() {
     if ! gh auth status &> /dev/null; then
-        log_error "GitHub authentication failed or was skipped. Bootstrapping aborted."
+        return 1
+    fi
+    if ! gh project list --owner "@me" &> /dev/null; then
+        return 1
+    fi
+    return 0
+}
+
+if ! verify_gh_auth_and_scope; then
+    log_error "GitHub CLI authentication or mandatory 'project' scope is missing."
+    echo -e "${YELLOW}[ACTION REQUIRED]${NC} Please authenticate and grant the 'project' scope by running:"
+    echo -e "  ${CYAN}gh auth refresh -s project${NC}"
+    echo -e "or"
+    echo -e "  ${CYAN}gh auth login -s project${NC}"
+    echo -e ""
+    echo -e "Press Enter after you have successfully authenticated to retry, or Ctrl+C to abort."
+    read -r < /dev/tty 2>/dev/null || true
+    
+    # Re-verify authentication and project scope
+    if ! verify_gh_auth_and_scope; then
+        log_error "GitHub authentication / 'project' scope verification failed again. Bootstrapping aborted."
+        echo -e "${RED}[ABORTED]${NC} Please run '${CYAN}gh auth refresh -s project${NC}' to authenticate and re-run this script."
         exit 1
     fi
 fi
 
-log_success "Authenticated to GitHub successfully."
+log_success "Authenticated to GitHub with 'project' scope successfully."
 
 # Initialize standard git repository if missing
 if [ ! -d ".git" ]; then
@@ -190,13 +205,14 @@ if gh project list --owner "$REPO_OWNER" &>/dev/null || gh project list --owner 
         else
             log_success "GitHub Project 'Status' field verified."
         fi
+    else
+        log_error "Failed to create or retrieve GitHub Project board for '$REPO_NAME'."
+        exit 1
     fi
 else
-    log_warn "GitHub CLI 'project' scope not active or API unauthenticated."
-    echo -e "${YELLOW}[RECOMMENDED]${NC} To enable automatic GitHub Project board status transitions, run:"
-    echo -e "  ${CYAN}gh auth refresh -s project${NC}"
-    echo -e "And ensure your GitHub Project board 'Status' field contains options:"
-    echo -e "  ${PURPLE}Backlog, Ready, Spec Reviewed, In Progress, In Review, Done${NC}"
+    log_error "GitHub CLI 'project' scope is not active or API is unauthenticated."
+    echo -e "${RED}[ABORTED]${NC} Please run '${CYAN}gh auth refresh -s project${NC}' to authenticate and re-run this script."
+    exit 1
 fi
 
 
