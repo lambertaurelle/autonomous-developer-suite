@@ -206,6 +206,18 @@ json_extract_field_id_by_name() {
     fi
 }
 
+json_extract_issue_urls() {
+    if command -v jq &>/dev/null; then
+        jq -r '.[].url' 2>/dev/null
+    elif command -v python3 &>/dev/null; then
+        python3 -c "import sys, json; data=json.load(sys.stdin); print('\n'.join(item['url'] for item in data if 'url' in item))" 2>/dev/null
+    elif command -v python &>/dev/null; then
+        python -c "import sys, json; data=json.load(sys.stdin); print('\n'.join(item['url'] for item in data if 'url' in item))" 2>/dev/null
+    else
+        grep -o '"url":"https://[^"]*"' | cut -d'"' -f4
+    fi
+}
+
 REMOTE_URL="$(git remote get-url origin 2>/dev/null || true)"
 REPO_OWNER=""
 REPO_NAME=""
@@ -264,6 +276,24 @@ if [ -n "$PROJECT_NUM" ] && [ "$PROJECT_NUM" != "null" ]; then
         log_success "Created GitHub Project 'Stage' field with stage transitions!"
     else
         log_success "GitHub Project 'Stage' field verified active."
+    fi
+
+    # Synchronize existing open repository issues to the project board
+    if [ -n "${REPO_SLUG:-}" ]; then
+        log_info "Synchronizing existing open repository issues to Project Board #$PROJECT_NUM..."
+        EXISTING_ISSUES="$(gh issue list --repo "$REPO_SLUG" --state open --limit 100 --format json 2>/dev/null | json_extract_issue_urls 2>/dev/null || true)"
+        if [ -z "$EXISTING_ISSUES" ]; then
+            EXISTING_ISSUES="$(gh issue list --repo "$REPO_SLUG" --state open --limit 100 --format json 2>/dev/null | grep -o '"url":"https://[^"]*"' | cut -d'"' -f4 || true)"
+        fi
+        if [ -n "$EXISTING_ISSUES" ]; then
+            for issue_url in $EXISTING_ISSUES; do
+                log_info "[TRACE] Linking issue to project: $issue_url"
+                gh project item-add "$PROJECT_NUM" --owner "$REPO_OWNER" --url "$issue_url" &>/dev/null || true
+            done
+            log_success "Synchronized existing open issues to Project Board #$PROJECT_NUM!"
+        else
+            log_info "No open repository issues to sync."
+        fi
     fi
 else
     log_error "Failed to create or retrieve GitHub Project board for '$REPO_NAME'."
