@@ -254,41 +254,25 @@ if [ -n "$PROJECT_NUM" ] && [ "$PROJECT_NUM" != "null" ]; then
     log_info "[TRACE] gh project field-list output:\n$FIELDS_OUTPUT"
 
     STATUS_FIELD_ID="$(json_extract_status_field_id "$FIELDS_OUTPUT")"
-    log_info "[TRACE] Target Status Field ID: '${STATUS_FIELD_ID:-NONE}'"
+    log_info "[TRACE] Default Status Field ID: '${STATUS_FIELD_ID:-NONE}'"
 
+    # Delete default Status field if present (which contains default Todo, In Progress, Done)
     if [ -n "$STATUS_FIELD_ID" ] && [ "$STATUS_FIELD_ID" != "null" ]; then
-        log_info "Updating 'Status' field options to ($STATUS_OPTIONS)..."
-        
-        MUTATION='mutation($fieldId: ID!) {
-          updateProjectV2SingleSelectField(input: {
-            fieldId: $fieldId,
-            options: [
-              { name: "Backlog", color: GRAY, description: "Item in backlog" },
-              { name: "Ready", color: BLUE, description: "Specification drafted and ready for review" },
-              { name: "Spec Reviewed", color: YELLOW, description: "Specification approved" },
-              { name: "In Progress", color: PURPLE, description: "Actively being coded/tested" },
-              { name: "In Review", color: ORANGE, description: "E2E testing passed, pending PR merge" },
-              { name: "Done", color: GREEN, description: "Merged and closed" }
-            ]
-          }) {
-            projectV2SingleSelectField { id name }
-          }
-        }'
+        log_info "Deleting default GitHub Project 'Status' field (ID: $STATUS_FIELD_ID)..."
+        DELETE_OUTPUT="$(gh project field-delete --id "$STATUS_FIELD_ID" 2>&1 || true)"
+        log_info "[TRACE] gh project field-delete output:\n$DELETE_OUTPUT"
+    fi
 
-        GRAPHQL_OUTPUT="$(gh api graphql -f query="$MUTATION" -f fieldId="$STATUS_FIELD_ID" 2>&1 || true)"
-        log_info "[TRACE] gh api graphql output:\n$GRAPHQL_OUTPUT"
+    log_info "Creating 'Status' field with lifecycle stages ($STATUS_OPTIONS)..."
+    FIELD_CREATE_OUTPUT="$(gh project field-create "$PROJECT_NUM" --owner "$REPO_OWNER" --name "Status" --data-type "SINGLE_SELECT" --single-select-options "$STATUS_OPTIONS" 2>&1 || true)"
+    log_info "[TRACE] gh project field-create output:\n$FIELD_CREATE_OUTPUT"
 
-        if echo "$GRAPHQL_OUTPUT" | grep -q "projectV2SingleSelectField"; then
-            log_success "Successfully configured GitHub Project 'Status' field options."
-        else
-            log_warn "GraphQL mutation failed. Attempting fallback field creation..."
-            FALLBACK_OUTPUT="$(gh project field-create "$PROJECT_NUM" --owner "$REPO_OWNER" --name "Lifecycle Status" --data-type "SINGLE_SELECT" --single-select-options "$STATUS_OPTIONS" 2>&1 || true)"
-            log_info "[TRACE] gh project field-create fallback output:\n$FALLBACK_OUTPUT"
-        fi
+    if echo "$FIELD_CREATE_OUTPUT" | grep -i -q "error"; then
+        log_warn "Creating 'Status' field returned a warning. Creating fallback 'Lifecycle Status' field..."
+        FALLBACK_OUTPUT="$(gh project field-create "$PROJECT_NUM" --owner "$REPO_OWNER" --name "Lifecycle Status" --data-type "SINGLE_SELECT" --single-select-options "$STATUS_OPTIONS" 2>&1 || true)"
+        log_info "[TRACE] gh project field-create fallback output:\n$FALLBACK_OUTPUT"
     else
-        log_info "Creating 'Status' field with lifecycle stages ($STATUS_OPTIONS)..."
-        FIELD_CREATE_OUTPUT="$(gh project field-create "$PROJECT_NUM" --owner "$REPO_OWNER" --name "Status" --data-type "SINGLE_SELECT" --single-select-options "$STATUS_OPTIONS" 2>&1 || true)"
-        log_info "[TRACE] gh project field-create output:\n$FIELD_CREATE_OUTPUT"
+        log_success "Successfully configured GitHub Project 'Status' field options!"
     fi
 else
     log_error "Failed to create or retrieve GitHub Project board for '$REPO_NAME'."
