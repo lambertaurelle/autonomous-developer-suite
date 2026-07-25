@@ -2,57 +2,50 @@
 
 This repository contains the complete, production-grade implementation of the **Autonomous Development Driven by AI Agents** architecture. By pairing structured specification-driven skills with deterministic, zero-token verification hooks, this suite bridges the gap between AI autonomy and absolute engineering rigor.
 
-Developed under the standards of **Google Antigravity**, **Conductor**, and the **Gemini Cookbook**, this package enables any repository to immediately instantiate a self-documenting, self-testing, and self-securing development environment.
+Developed under the standards of **Google Antigravity**, **Conductor**, and the **Gemini Cookbook**, this package enables any repository to immediately instantiate a self-documenting, self-testing, self-securing, and self-shipping development environment.
 
 ---
 
 ## **1. Architectural Philosophy: "A Skill Asks; A Hook Imposes"**
 
 The suite relies on a strict dual-control plane model:
-1. **Interactive Skills (Method Plane)**: Specialized workflows carrying business judgment, persona-driven interviews, and adversarial code generation. Written in Markdown and executed inside the AI context.
-2. **Deterministic Hooks (Enforcement Plane)**: Zero-token, ultra-fast bash execution blocks running completely outside the LLM. If tests fail, coverage drops below **90%**, or security scans detect vulnerabilities, the Git loop is locked.
+1. **Interactive Skills (Method Plane)**: Specialized workflows carrying business judgment, persona-driven interviews, adversarial specification audits, and contract-first code generation. Written in Markdown and executed inside the AI context.
+2. **Deterministic Hooks (Enforcement Plane)**: Zero-token, ultra-fast execution blocks running completely outside the LLM. If tests fail, coverage drops below **90%**, security scans detect vulnerabilities, or unauthorized DB drops are attempted, execution is locked.
 
 ```
                           ┌───────────────────────────┐
                           │    Human Product Owner    │
                           └─────────────┬─────────────┘
                                         │
-                                 /interview-prd
+                                  /interview-me
+                                   (Workflow)
                                         ▼
-                          ┌───────────────────────────┐
-                          │  Draft docs/PRD.md        │
-                          └─────────────┬─────────────┘
+     ┌─────────────────────────────────────────────────────────────────────┐
+     │                      Upstream Scoping Pipeline                      │
+     │  /interview-prd ───► /audit-prd ───► /arch-gate ───► /prd2backlog   │
+     │  (6-Pillar Grid)     (Seals PRD)     (Blueprint)     (Intake Issues)│
+     └──────────────────────────────────┬──────────────────────────────────┘
                                         │
-                                   /audit-prd
                                         ▼
                           ┌───────────────────────────┐
-                          │ Sealed docs/PRD.md (100%) │
-                          └─────────────┬─────────────┘
-                                        │
-                                   /arch-gate
-                                        ▼
-                          ┌───────────────────────────┐
-                          │ docs/architecture.md      │
-                          └─────────────┬─────────────┘
-                                        │
-                                  /prd2backlog
-                                        ▼
-                          ┌───────────────────────────┐
-                          │   GitHub Issues Created   │
+                          │ GitHub Issues (Backlog)   │
                           └─────────────┬─────────────┘
                                         │
                               /implementation-loop
+                                   (Workflow)
                                         ▼
-                          ┌───────────────────────────┐
-                          │  Engineering Sub-Agents   │
-                          │ /specify → /review-spec   │
-                          │ → /tdd-build → /e2e-test  │
-                          │ → /ship                   │
-                          └─────────────┬─────────────┘
+     ┌─────────────────────────────────────────────────────────────────────┐
+     │                     Engineering Sub-Agents                          │
+     │  /specify ───────────────► /review-spec ────────────► /tdd-build    │
+     │  (Stage: Ready)            (Stage: Spec Reviewed)   (Stage: In Prog)│
+     │                                                            │        │
+     │  /ship ◄────────────────── /e2e-test ◄──────────────────────┘        │
+     │  (Stage: Done)             (Stage: In Review)                       │
+     └──────────────────────────────────┬──────────────────────────────────┘
                                         │
-                          ┌─────────────▼─────────────┐
-                          │      src/core & shell     │
-                          └─────────────┬─────────────┘
+                               ┌────────▼────────┐
+                               │ src/core & shell│
+                               └────────┬────────┘
                                         │
                        [Git Commit / Pre-Commit Hooks]
                                         │
@@ -70,12 +63,15 @@ Bootstrapping a project with this suite deploys the following structure:
 
 ```
 my-project/
-├── AGENTS.md                    # Project Constitution (FC/IS, cascading, circuit breakers)
+├── AGENTS.md                    # Project Constitution (FC/IS, model cascading, circuit breakers)
 ├── SPEC.md                      # Active Behavioral Specification Contract (archived in docs/specs/)
 ├── .agents/
-│   ├── hooks.json               # Deterministic trigger definitions
+│   ├── hooks.json               # Deterministic trigger & tool permission definitions
 │   ├── default-ruff.toml        # Fallback Ruff Python linter configuration
 │   ├── default-eslint.json      # Fallback ESLint JavaScript/TypeScript linter configuration
+│   ├── conventions/             # Code layout contract harness definitions
+│   │   ├── code-layout.md       # Human-readable module and package rules
+│   │   └── code-layout.env      # Machine-readable layout invariants for hooks
 │   ├── rules/                   # Supreme agent compliance rules
 │   │   ├── fc-is-architecture.md# [R-ARCH] Functional Core vs Imperative Shell
 │   │   ├── model-cascading.md   # [R-MODEL] Gemini model cascading & token routing (https://ai.google.dev/gemini-api/docs/latest-model)
@@ -83,23 +79,28 @@ my-project/
 │   │   └── traceability.md      # [R-TRACE] PRD Rule to commit mapping
 │   ├── workflows/               # Pre-defined orchestration procedures
 │   │   ├── implementation-loop.md # Autonomous implementation loop sequence
-│   │   └── interview-prd.md     # Guided scoping and interview sequence
+│   │   └── interview-me.md      # Guided scoping and interview sequence (/interview-me)
 │   └── skills/                  # Procedural skill files per persona
-│       ├── interview-prd/       # [PO] Guided scoping and web search matrix
-│       ├── audit-prd/           # [PO] 360° completeness grid audit
-│       ├── arch-gate/           # [PO/ENG] Upstream technology decision gate
-│       ├── prd2backlog/         # [PO] Backlog generator & reconciliation (templates/STORY.template.md)
-│       ├── specify/             # [ENG] Specification drafter (templates/SPEC.template.md)
-│       ├── review-spec/         # [ENG] Adversarial spec reviewer
-│       ├── tdd-build/           # [ENG] Test-driven core/shell builder (templates/code-layout.*)
-│       ├── e2e-test/            # [ENG] Playwright E2E validator
-│       └── ship/                # [ENG] Main branch rule-traceability merger
+│       ├── interview-prd/       # [PO] Guided 6-pillar scoping and web search matrix
+│       ├── audit-prd/           # [PO] 5-check completeness grid audit & PRD sealer
+│       ├── arch-gate/           # [PO/ENG] Upstream technology decision gate & AI data patterns
+│       ├── prd2backlog/         # [PO] Backlog generator & idempotent reconciliation
+│       │   └── templates/STORY.template.md
+│       ├── specify/             # [ENG] Specification drafter & stage manager
+│       │   └── templates/SPEC.template.md
+│       ├── review-spec/         # [ENG] Adversarial 5-check specification auditor
+│       ├── tdd-build/           # [ENG] Test-driven core/shell builder & 2-level tests
+│       │   └── templates/
+│       │       ├── code-layout.template.md
+│       │       └── code-layout.env.template
+│       ├── e2e-test/            # [ENG] Playwright E2E browser agent validator
+│       └── ship/                # [ENG] Automated remote PR creation, CI watcher & squash-merger
 ├── docs/                        # Specifications, contracts, and state
-│   ├── PRD.md                   # Validated PRD (100% 360° completeness)
+│   ├── PRD.md                   # Validated PRD (100% 360° completeness, status: sealed)
 │   ├── architecture.md          # Infrastructure contracts sealed by arch-gate
 │   └── specs/                   # Archived issue specifications
 ├── scripts/
-│   ├── init-project.sh          # Automated project initializer script
+│   ├── init-project.sh          # Automated project initializer script (v5.0 Remote-Ready)
 │   └── hooks/                   # Zero-token hook scripts
 │       ├── pre-commit-lint.sh   # Syntactic/styling checker & commit message format gate
 │       ├── pre-commit-test.sh   # Run tests + apply isomorphic log trimming
@@ -109,7 +110,7 @@ my-project/
 │       ├── on-circuit-breaker.sh# Coordinated human takeover state log
 │       └── on-architecture-drift.sh # Architectural contract defender
 └── src/                         # System Source Code
-    ├── core/                    # Functional Core (Pure deterministic logic, 0 IO)
+    ├── core/                    # Functional Core (Pure deterministic logic, 0 IO/DB)
     └── shell/                   # Imperative Shell (IO, DB, HTTP APIs)
 ```
 
@@ -119,7 +120,13 @@ my-project/
 
 ### **Prerequisites**
 - Git installed and initialized.
-- GitHub CLI (`gh`) installed and authenticated (`gh auth login`).
+- GitHub CLI (`gh`) installed and authenticated with `project` scope:
+  ```bash
+  gh auth login -s project
+  # or to refresh permissions on an existing login:
+  gh auth refresh -s project
+  ```
+  *(The `project` OAuth scope is mandatory for automated GitHub Project V2 Stage transitions).*
 - Standard developer runtime (Python 3.8+ or Node.js 16+).
 - Recommended global packages (automatically detected and used if present):
   - Python: `ruff`, `pylint`, `pytest`, `coverage`
@@ -150,9 +157,9 @@ bash <(curl -fsSL https://raw.githubusercontent.com/lambertaurelle/autonomous-de
 ```
 
 *What the one-liner initializer does automatically:*
-1. **GitHub Setup**: Verifies `gh` CLI authentication and interactively prompts to create a private or public GitHub repository (`gh repo create`) if no `origin` remote exists.
-2. **Directory Architecture**: Constructs `.agents/skills/`, `.agents/rules/`, `.agents/workflows/`, `docs/specs/`, `src/core/`, `src/shell/`, and `scripts/hooks/`.
-3. **Downloads Production Governance & Skills**: Pulls all 31 full production files (`AGENTS.md`, 9 skills, rules, workflows, templates, and pre-commit hook scripts) directly from GitHub raw endpoints.
+1. **GitHub Setup**: Verifies `gh` CLI authentication and mandatory `project` scope. Interactively prompts to create a private or public GitHub repository (`gh repo create`) if no `origin` remote exists.
+2. **Directory Architecture**: Constructs `.agents/skills/`, `.agents/rules/`, `.agents/workflows/`, `.agents/conventions/`, `docs/specs/`, `src/core/`, `src/shell/`, and `scripts/hooks/`.
+3. **Downloads Production Governance & Skills**: Pulls all full production files (`AGENTS.md`, 9 skills, rules, workflows, templates, and pre-commit hook scripts) directly from GitHub raw endpoints.
 4. **Enforces Line Endings**: Creates `.gitattributes` to enforce Unix LF line endings across Windows, Linux, and WSL.
 5. **Configures Verification Gates**: Makes all verification hook scripts executable (`chmod +x scripts/hooks/*.sh`).
 
@@ -167,7 +174,7 @@ git clone https://github.com/lambertaurelle/autonomous-developer-suite.git my-pr
 cd my-project
 ```
 
-Your cloned project comes pre-configured with all 31 governance files, skills, and hooks!
+Your cloned project comes pre-configured with all governance files, skills, workflows, templates, and hooks!
 
 If you ever want to re-run or re-initialize:
 ```bash
@@ -178,34 +185,36 @@ If you ever want to re-run or re-initialize:
 
 ### **Next Steps: Start Product Scoping**
 
-Once initialized, start your interactive product requirements session by calling the Product Owner persona:
+Once initialized, launch the interactive product requirements & scoping pipeline:
 
 ```text
-/interview-prd
+/interview-me
 ```
 
 ---
 
-## **4. Detailed Skills and Persona Workflows**
+## **4. Detailed Workflows, Skills, and Persona Pipelines**
 
-The suite divides responsibility between two primary agent personas:
+The suite divides responsibility between two primary agent personas and workflows:
 
-### **4.1 Product Owner Persona**
-- **/interview-prd**: Leads an interactive scoping interview with the Product Owner to generate `docs/PRD.md` following the canonical 12-section structure. Evaluates the 6-pillar 360° Completeness Grid, creates multi-pillar User Stories, and triggers Augmented Recommendation Mode (Web Search Matrix) when engineering choices are unassigned.
-- **/audit-prd**: Rigid 5-check linter auditing `docs/PRD.md` against the 12 canonical sections, 6-pillar grid, multi-pillar user story backlog, and testable acceptance criteria. Technically blocks downstream execution until 100% compliant, then seals `docs/PRD.md` (`status: sealed`).
-- **/prd2backlog**: Decomposes the sealed PRD into a prioritized list of atomic user stories and publishes or reconciles them as GitHub Issues via the `github` MCP server (or `gh issue create`).
+### **4.1 Product Owner Persona & Upstream Pipeline (`/interview-me`)**
+- **/interview-me (Workflow)**: Upstream scoping pipeline that orchestrates the product owner intake sequence: `/interview-prd` → `/audit-prd` → `/arch-gate` → `/prd2backlog`.
+- **/interview-prd (v2.1.0)**: Leads an interactive scoping interview with the Product Owner to generate `docs/PRD.md` following the canonical 12-section structure. Evaluates the 6-pillar 360° Completeness Grid (Functional Vision, Stack & Architecture, Data Strategy, Infra & Deployment, Security & Compliance, Non-Functional & UX), creates multi-pillar User Stories (`US1`..`USn`), and triggers **Augmented Recommendation Mode** (Web Search Matrix & Synthetic Decision Matrix) when technical or architectural choices are unassigned.
+- **/audit-prd (v2.0.0)**: Inflexible 5-check linter auditing `docs/PRD.md` against the 12 canonical sections, 6-pillar grid, multi-pillar user story backlog, testable acceptance criteria, and functional/non-functional traceability. Technically blocks downstream execution until 100% compliant, then seals `docs/PRD.md` (`status: sealed`).
+- **/prd2backlog (v4.0.0)**: Decomposes the sealed PRD into a prioritized list of atomic user stories and publishes or reconciles them as GitHub Issues via the `github` MCP server using `STORY.template.md`. Stamps hidden `prd-sync` HTML markers (`<!-- prd-sync: key=us<n> src-sha=<short_hash> -->`) and applies GitHub metadata labels (`status:draft`, `must-have`, `should-have`, `could-have`) for 100% idempotent reconciliation without redundant API writes.
 
-### **4.2 Engineering Persona**
-- **/arch-gate**: Analyzes the sealed PRD to produce the immutable blueprint `docs/architecture.md`. Evaluates data volume and query semantics to select the optimal AI Data Integration Pattern (Pattern A: Direct Context Injection, Pattern B: Text-to-SQL / Dynamic Tool Use, Pattern C: RAG / Vector Search), enforces Functional Core (`src/core/`) vs. Imperative Shell (`src/shell/`) boundaries, presents a single-screen decision matrix to the human architect, and registers the Architecture Drift Hook.
-- **/specify**: Pulls user story acceptance criteria from GitHub via the `github` MCP server and drafts `SPEC.md` adhering to `templates/SPEC.template.md`. Runs **fully autonomously** inside the development loop, using the adversarial `/review-spec` sub-agent for automated specification audits before auto-landing on an `issue/<number>-<title>` branch without human chat prompts.
-- **/review-spec**: Dedicated adversarial reviewer sub-agent that audits `SPEC.md` drafts from `/specify` against `templates/SPEC.template.md`, `docs/PRD.md`, and `docs/architecture.md`. Evaluates sequential rule IDs (`R1`, `R2`, ...), self-sufficiency, testability, and zero scope-creep.
-- **/tdd-build**: Executes a strict **TDD Red-Green-Refactor** cycle using stateless sub-agents. Enforces pure Functional Core isolation (zero DB/IO imports in `src/core/`), zero `TODO` placeholders, real test assertion density, and >=90% test coverage.
-- **/e2e-test**: Deploys a browser agent running Playwright to simulate end-to-end user journeys against the integrated application.
-- **/ship**: Executes pre-commit verification gates (linting, zero TODOs, FC purity, >=90% test coverage, Trivy security scans), automates GitHub PR creation via `gh pr create`, and performs Squash & Merge to `main` with rule-traceability commit formatting `type(scope): summary [Rn] (#issue_id)`.
+### **4.2 Engineering Persona & Autonomous Loop (`/implementation-loop`)**
+- **/implementation-loop (Workflow)**: Autonomous execution loop orchestrating the engineering sub-agents sequentially for each backlog story: `/specify` → `/review-spec` → `/tdd-build` → `/e2e-test` → `/ship`.
+- **/arch-gate (v3.1.0)**: Analyzes the sealed PRD to produce the immutable blueprint `docs/architecture.md`. Evaluates data volume and query semantics to select the optimal **AI Data Integration Pattern** (Pattern A: Direct Context Injection, Pattern B: Text-to-SQL / Dynamic Tool Use, Pattern C: RAG / Vector Search), enforces Functional Core (`src/core/`) vs. Imperative Shell (`src/shell/`) boundaries, presents a single-screen decision matrix to the human architect, and registers the Architecture Drift Watcher Hook.
+- **/specify (v4.0.0)**: Intakes user story acceptance criteria from GitHub via the `github` MCP server with strict input context boundaries (reading ONLY the target Issue, `templates/SPEC.template.md`, and active `SPEC.md`). Scaffolds `.agents/conventions/code-layout.md` and `code-layout.env` if missing. Runs **fully autonomously** inside `/implementation-loop`, using the adversarial `/review-spec` sub-agent for zero-HITL specification audits before landing `SPEC.md` on an `issue/<number>-<title>` branch and updating the GitHub Project Stage to **`Ready`**.
+- **/review-spec (v4.0.0)**: Dedicated adversarial reviewer sub-agent that audits `SPEC.md` drafts against `templates/SPEC.template.md`, `docs/PRD.md`, and `docs/architecture.md` across 5 checks: Canonical Template Compliance, Sequential Rule Integrity (`R1`, `R2`, ...), Self-Sufficiency Audit, Strict Scope-Creep Defense, and Architectural Boundary Alignment. On `VERDICT: APPROVED`, transitions GitHub Project Stage to **`Spec Reviewed`**.
+- **/tdd-build (v3.1.0)**: Executes a strict **TDD Red-Green-Refactor** cycle using stateless sub-agents. Writes 2-level tests (Unit isolation + Engine compositional assertions `evaluate(input) -> outcome, ["Rn"]`), enforces pure Functional Core isolation (zero DB/IO imports in `src/core/`), central linter configuration discipline, log trimming/error feeding, strike-5 circuit breaker lockout, and **Eval-Driven Development (EDD)** golden dataset testing for embedded AI features. Updates GitHub Project Stage to **`In Progress`**.
+- **/e2e-test (v3.0.0)**: Deploys a headless browser agent running Playwright to simulate end-to-end user journeys, happy paths, edge cases, and rollback flows against the integrated application. Includes an automated zombie process port resolver (default port 3000) and 5-attempt circuit breaker. On success, updates GitHub Project Stage to **`In Review`**.
+- **/ship (v3.2.0)**: Executes pre-commit verification gates (linting, zero TODOs, FC purity, >=90% test coverage, Trivy security scans), creates Pull Request via `gh pr create` with `Closes #n`, monitors remote CI checks via `gh pr checks --watch`, and performs remote squash-merge (`gh pr merge --squash --delete-branch`), automatically closing the issue and updating GitHub Project Stage to **`Done`**. Automatically syncs local workspace back to `main` (`git checkout main && git pull`). Enforces a strict **FORBIDDEN FALLBACK** policy against local squash-merging when GitHub authentication fails.
 
 ---
 
-## **5. Zero-Token Hook Gates (Enforcement Shell)**
+## **5. Zero-Token Hook Gates & Tool Security Shell**
 
 Our hooks act as immediate circuit-breakers to protect repository integrity:
 
@@ -237,7 +246,11 @@ Our hooks act as immediate circuit-breakers to protect repository integrity:
 
 ### **7. Architecture Drift Protection (`on-architecture-drift.sh`)**
 - Intercepts any staged changes modifying the sealed, immutable `docs/architecture.md` document.
-- Unless bypass files are provided, it rejects the commit to enforce that the AI agent does not unilaterally modify technology stacks or databases during code generation.
+- Rejects unauthorized commits to enforce that AI agents cannot unilaterally alter tech stacks or architecture.
+
+### **8. Pre-Tool Database Protection (`PreToolUse` in `hooks.json`)**
+- Intercepts tool execution calls outside the LLM context.
+- Parses `$TOOL_ARGUMENTS` and blocks destructive SQL statements (e.g. `DROP DATABASE`, `DROP TABLE`, `DELETE FROM users`).
 
 ---
 
