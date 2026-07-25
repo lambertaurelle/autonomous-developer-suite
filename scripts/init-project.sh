@@ -170,6 +170,7 @@ REPO_NAME=""
 
 if [ -n "$REMOTE_URL" ]; then
     REPO_SLUG="$(echo "$REMOTE_URL" | sed -E 's/.*[:\/]([^\/]+\/[^\/]+?)(\.git)?$/\1/')"
+    REPO_SLUG="${REPO_SLUG%.git}"
     REPO_OWNER="$(echo "$REPO_SLUG" | cut -d'/' -f1)"
     REPO_NAME="$(echo "$REPO_SLUG" | cut -d'/' -f2)"
 fi
@@ -178,6 +179,7 @@ if [ -z "$REPO_OWNER" ]; then
     REPO_OWNER="@me"
     REPO_NAME="$(basename "$(pwd)")"
 fi
+REPO_NAME="${REPO_NAME%.git}"
 
 STATUS_OPTIONS="Backlog,Ready,Spec Reviewed,In Progress,In Review,Done"
 
@@ -197,13 +199,38 @@ if gh project list --owner "$REPO_OWNER" &>/dev/null || gh project list --owner 
             log_success "Linked Project #$PROJECT_NUM to repository $REPO_SLUG."
         fi
 
-        STATUS_FIELD_EXISTS="$(gh project field-list "$PROJECT_NUM" --owner "$REPO_OWNER" --format json --jq '.fields[] | select(.name == "Status") | .name' 2>/dev/null || true)"
-        if [ -z "$STATUS_FIELD_EXISTS" ]; then
+        # Locate Status field ID
+        STATUS_FIELD_ID="$(gh project field-list "$PROJECT_NUM" --owner "$REPO_OWNER" --format json --jq '.fields[] | select(.name == "Status") | .id' 2>/dev/null || true)"
+
+        if [ -n "$STATUS_FIELD_ID" ]; then
+            log_info "Updating 'Status' field options to ($STATUS_OPTIONS)..."
+            
+            MUTATION='mutation($fieldId: ID!) {
+              updateProjectV2SingleSelectField(input: {
+                fieldId: $fieldId,
+                options: [
+                  { name: "Backlog", color: GRAY, description: "Item in backlog" },
+                  { name: "Ready", color: BLUE, description: "Specification drafted and ready for review" },
+                  { name: "Spec Reviewed", color: YELLOW, description: "Specification approved" },
+                  { name: "In Progress", color: PURPLE, description: "Actively being coded/tested" },
+                  { name: "In Review", color: ORANGE, description: "E2E testing passed, pending PR merge" },
+                  { name: "Done", color: GREEN, description: "Merged and closed" }
+                ]
+              }) {
+                projectV2SingleSelectField { id name }
+              }
+            }'
+
+            if gh api graphql -f query="$MUTATION" -f fieldId="$STATUS_FIELD_ID" &>/dev/null; then
+                log_success "Successfully configured GitHub Project 'Status' field options."
+            else
+                log_warn "Could not update default 'Status' field options via GraphQL API. Creating single-select field 'Lifecycle Status'..."
+                gh project field-create "$PROJECT_NUM" --owner "$REPO_OWNER" --name "Lifecycle Status" --data-type "SINGLE_SELECT" --single-select-options "$STATUS_OPTIONS" &>/dev/null || true
+            fi
+        else
             log_info "Creating 'Status' field with lifecycle stages ($STATUS_OPTIONS)..."
             gh project field-create "$PROJECT_NUM" --owner "$REPO_OWNER" --name "Status" --data-type "SINGLE_SELECT" --single-select-options "$STATUS_OPTIONS" &>/dev/null || true
             log_success "Created 'Status' field with stage transitions."
-        else
-            log_success "GitHub Project 'Status' field verified."
         fi
     else
         log_error "Failed to create or retrieve GitHub Project board for '$REPO_NAME'."
