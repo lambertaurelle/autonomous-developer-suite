@@ -1,3 +1,7 @@
+### Disclaimer and Credits :
+- This repo took several of its ideas from the incredible **SDD-design** [repo](https://github.com/npintaux/sdd-plugin) made by *Nicolas Pintaux*  and is less focus in development excellence but rather on full automation.
+- At this stage, this work is relying on Antigravity IDE workflows, which is NOT available in Antigravity CLI or Antigravity 2.0.
+
 # **Autonomous Developer Suite — Production-Grade Agentic Blueprint**
 
 This repository contains the complete, production-grade implementation of the **Autonomous Development Driven by AI Agents** architecture. By pairing structured specification-driven skills with deterministic, zero-token verification hooks, this suite bridges the gap between AI autonomy and absolute engineering rigor.
