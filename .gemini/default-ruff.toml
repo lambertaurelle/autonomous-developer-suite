@@ -1,0 +1,7 @@
+# Fallback Ruff configuration for Antigravity CLI
+line-length = 88
+target-version = "py38"
+
+[lint]
+select = ["E", "F", "W"]
+ignore = []

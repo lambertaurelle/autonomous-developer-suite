@@ -1,0 +1,14 @@
+{
+  "$schema": "https://antigravity.google/schemas/settings.json",
+  "sandbox": {
+    "mode": "standard",
+    "nonWorkspaceFileAccess": "ask",
+    "internetAccess": "allow"
+  },
+  "toolExecutionPolicy": "request-review",
+  "mcp": {
+    "github": {
+      "enabled": true
+    }
+  }
+}

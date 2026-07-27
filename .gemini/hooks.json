@@ -1,6 +1,6 @@
 {
   "version": "3.0",
-  "description": "Antigravity Deterministic Zero-Token Hooks Configuration",
+  "description": "Antigravity Deterministic Zero-Token Hooks Configuration for agy CLI",
   "hooks": {
     "PreCommit": [
       {

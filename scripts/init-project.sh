@@ -311,22 +311,24 @@ fi
 # ==============================================================================
 # Directory Tree Construction
 # ==============================================================================
-log_info "Creating autonomous developer directory tree..."
+log_info "Creating autonomous developer directory tree for Antigravity CLI (agy)..."
 DIRS=(
-    ".agents/skills/interview-prd"
-    ".agents/skills/audit-prd"
-    ".agents/skills/arch-gate"
-    ".agents/skills/prd2backlog"
-    ".agents/skills/prd2backlog/templates"
-    ".agents/skills/specify"
-    ".agents/skills/specify/templates"
-    ".agents/skills/review-spec"
-    ".agents/skills/tdd-build"
-    ".agents/skills/tdd-build/templates"
-    ".agents/skills/e2e-test"
-    ".agents/skills/ship"
-    ".agents/workflows"
-    ".agents/rules"
+    ".gemini/skills/interview-me"
+    ".gemini/skills/implementation-loop"
+    ".gemini/skills/interview-prd"
+    ".gemini/skills/audit-prd"
+    ".gemini/skills/arch-gate"
+    ".gemini/skills/prd2backlog"
+    ".gemini/skills/prd2backlog/templates"
+    ".gemini/skills/specify"
+    ".gemini/skills/specify/templates"
+    ".gemini/skills/review-spec"
+    ".gemini/skills/tdd-build"
+    ".gemini/skills/tdd-build/templates"
+    ".gemini/skills/e2e-test"
+    ".gemini/skills/ship"
+    ".gemini/rules"
+    ".gemini/conventions"
     "docs/specs"
     "src/core"
     "src/shell"
@@ -342,36 +344,50 @@ for dir in "${DIRS[@]}"; do
     fi
 done
 
+# Create dual compatibility symlink .agents -> .gemini
+if [ ! -L ".agents" ] && [ ! -d ".agents" ]; then
+    log_info "Creating dual compatibility symlink: .agents -> .gemini"
+    ln -s .gemini .agents 2>/dev/null || true
+elif [ -d ".agents" ] && [ ! -L ".agents" ]; then
+    log_info "Migrating .agents folder to symlink .agents -> .gemini..."
+    cp -r .agents/* .gemini/ 2>/dev/null || true
+    rm -rf .agents
+    ln -s .gemini .agents
+fi
+
 # ==============================================================================
 # Remote & Local File Synchronization Engine
 # ==============================================================================
-log_info "Synchronizing production governance, rules, workflows, skills, and hooks..."
+log_info "Synchronizing production governance, rules, skills, and hooks..."
 
 FILES_TO_SYNC=(
+    "GEMINI.md"
     "AGENTS.md"
     ".gitattributes"
-    ".agents/hooks.json"
-    ".agents/default-eslint.json"
-    ".agents/default-ruff.toml"
-    ".agents/rules/circuit-breakers.md"
-    ".agents/rules/fc-is-architecture.md"
-    ".agents/rules/model-cascading.md"
-    ".agents/rules/traceability.md"
-    ".agents/workflows/implementation-loop.md"
-    ".agents/workflows/interview-me.md"
-    ".agents/skills/arch-gate/SKILL.md"
-    ".agents/skills/audit-prd/SKILL.md"
-    ".agents/skills/e2e-test/SKILL.md"
-    ".agents/skills/interview-prd/SKILL.md"
-    ".agents/skills/prd2backlog/SKILL.md"
-    ".agents/skills/prd2backlog/templates/STORY.template.md"
-    ".agents/skills/review-spec/SKILL.md"
-    ".agents/skills/ship/SKILL.md"
-    ".agents/skills/specify/SKILL.md"
-    ".agents/skills/specify/templates/SPEC.template.md"
-    ".agents/skills/tdd-build/SKILL.md"
-    ".agents/skills/tdd-build/templates/code-layout.env.template"
-    ".agents/skills/tdd-build/templates/code-layout.template.md"
+    ".gemini/hooks.json"
+    ".gemini/settings.json"
+    ".gemini/default-eslint.json"
+    ".gemini/default-ruff.toml"
+    ".gemini/rules/circuit-breakers.md"
+    ".gemini/rules/fc-is-architecture.md"
+    ".gemini/rules/model-cascading.md"
+    ".gemini/rules/traceability.md"
+    ".gemini/skills/interview-me/SKILL.md"
+    ".gemini/skills/implementation-loop/SKILL.md"
+    ".gemini/skills/arch-gate/SKILL.md"
+    ".gemini/skills/audit-prd/SKILL.md"
+    ".gemini/skills/e2e-test/SKILL.md"
+    ".gemini/skills/interview-prd/SKILL.md"
+    ".gemini/skills/prd2backlog/SKILL.md"
+    ".gemini/skills/prd2backlog/templates/STORY.template.md"
+    ".gemini/skills/review-spec/SKILL.md"
+    ".gemini/skills/ship/SKILL.md"
+    ".gemini/skills/specify/SKILL.md"
+    ".gemini/skills/specify/templates/SPEC.template.md"
+    ".gemini/skills/tdd-build/SKILL.md"
+    ".gemini/skills/tdd-build/templates/code-layout.env.template"
+    ".gemini/skills/tdd-build/templates/code-layout.template.md"
+    "scripts/hooks/install-git-hooks.sh"
     "scripts/hooks/on-architecture-drift.sh"
     "scripts/hooks/on-circuit-breaker.sh"
     "scripts/hooks/on-interrupt.sh"
@@ -423,6 +439,12 @@ done
 # Ensure hook scripts are executable
 chmod +x scripts/hooks/*.sh 2>/dev/null || true
 
+# Install Git pre-commit hooks
+if [ -f "scripts/hooks/install-git-hooks.sh" ]; then
+    log_info "Installing Git pre-commit verification hooks into .git/hooks/pre-commit..."
+    bash scripts/hooks/install-git-hooks.sh || log_warn "Git hook installation skipped."
+fi
+
 # Normalize line endings for shell scripts if dos2unix / sed is available
 if command -v dos2unix &>/dev/null; then
     dos2unix scripts/hooks/*.sh 2>/dev/null || true
@@ -441,7 +463,7 @@ GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME" \
 GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL" \
 GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME" \
 GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL" \
-git commit -m "feat(bootstrap): initialize autonomous developer suite [v5.0]" --no-verify 2>/dev/null || true
+git commit -m "feat(bootstrap): initialize autonomous developer suite for agy CLI [v5.0]" --no-verify 2>/dev/null || true
 
 if git remote get-url origin &>/dev/null; then
     log_info "Pushing bootstrapped suite files to GitHub..."
