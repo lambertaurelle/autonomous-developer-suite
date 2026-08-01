@@ -345,14 +345,25 @@ for dir in "${DIRS[@]}"; do
 done
 
 # Create dual compatibility symlink .agents -> .gemini
-if [ ! -L ".agents" ] && [ ! -d ".agents" ]; then
-    log_info "Creating dual compatibility symlink: .agents -> .gemini"
-    ln -s .gemini .agents 2>/dev/null || true
-elif [ -d ".agents" ] && [ ! -L ".agents" ]; then
-    log_info "Migrating .agents folder to symlink .agents -> .gemini..."
+if [ -L ".agents" ]; then
+    TARGET=$(readlink ".agents" || true)
+    if [ "$TARGET" != ".gemini" ]; then
+        log_info "Re-pointing symlink: .agents -> .gemini"
+        rm -f .agents
+        ln -s .gemini .agents 2>/dev/null || true
+    else
+        log_info "Dual compatibility symlink verified: .agents -> .gemini"
+    fi
+elif [ -d ".agents" ]; then
+    log_info "Migrating physical .agents folder to symlink .agents -> .gemini..."
     cp -r .agents/* .gemini/ 2>/dev/null || true
     rm -rf .agents
     ln -s .gemini .agents
+    log_success "Created dual compatibility symlink: .agents -> .gemini"
+else
+    log_info "Creating dual compatibility symlink: .agents -> .gemini"
+    ln -s .gemini .agents 2>/dev/null || true
+    log_success "Created dual compatibility symlink: .agents -> .gemini"
 fi
 
 # ==============================================================================
